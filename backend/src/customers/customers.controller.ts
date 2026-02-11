@@ -15,10 +15,11 @@ import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CompanyGuard } from '../auth/company.guard';
 
 @ApiTags('Clientes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyGuard)
 @Controller('customers')
 export class CustomersController {
   constructor(private customersService: CustomersService) {}

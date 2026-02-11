@@ -24,20 +24,45 @@ import {
   DollarSign,
   Users,
   Building2,
+  MapPin,
   LogOut,
   ChevronDown,
   Menu,
   X,
+  Factory,
+  Gavel,
+  UserCheck,
 } from "lucide-react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Contratos", href: "/dashboard/contracts", icon: FileText },
-  { name: "Ativos", href: "/dashboard/ativos", icon: Package },
-  { name: "Frota", href: "/dashboard/fleet", icon: Truck },
-  { name: "Cobrança", href: "/dashboard/collections", icon: DollarSign },
-  { name: "Clientes", href: "/dashboard/customers", icon: Users },
-  { name: "Empresas", href: "/dashboard/companies", icon: Building2 },
+const navGroups = [
+  {
+    title: "Visão Geral",
+    items: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
+  },
+  {
+    title: "Operacional",
+    items: [
+      { name: "Contratos", href: "/dashboard/contracts", icon: FileText },
+      { name: "Ativos", href: "/dashboard/ativos", icon: Package },
+      { name: "Estoque", href: "/dashboard/stock-locations", icon: MapPin },
+      { name: "Frota", href: "/dashboard/fleet", icon: Truck },
+      { name: "Motoristas", href: "/dashboard/drivers", icon: UserCheck },
+    ],
+  },
+  {
+    title: "Financeiro",
+    items: [
+      { name: "Cobrança", href: "/dashboard/invoices", icon: DollarSign },
+      { name: "Clientes", href: "/dashboard/customers", icon: Users },
+      { name: "Fornecedores", href: "/dashboard/suppliers", icon: Factory },
+      { name: "Licitações", href: "/dashboard/biddings", icon: Gavel },
+    ],
+  },
+  {
+    title: "Administração",
+    items: [{ name: "Empresas", href: "/dashboard/companies", icon: Building2 }],
+  },
 ];
 
 export default function DashboardLayout({
@@ -139,27 +164,36 @@ export default function DashboardLayout({
         )}
 
         {/* Navigation */}
-        <nav className="p-3 space-y-1">
-          {navigation.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <item.icon className="w-5 h-5 shrink-0" />
-                {item.name}
-              </Link>
-            );
-          })}
+        <nav className="p-3 space-y-4">
+          {navGroups.map((group) => (
+            <div key={group.title}>
+              <p className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {group.title}
+              </p>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
       </aside>
 
@@ -218,7 +252,10 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          <Breadcrumbs />
+          {children}
+        </main>
       </div>
     </div>
   );

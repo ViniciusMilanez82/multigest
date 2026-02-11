@@ -33,6 +33,7 @@ import {
   Loader2,
   Package,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface AssetType {
   id: string;
@@ -121,6 +122,7 @@ export default function AtivosPage() {
       setTotalPages(data.totalPages);
       setTotal(data.total);
     } catch {
+      toast.error("Erro ao carregar dados");
       setAssets([]);
     } finally {
       setIsLoading(false);
@@ -132,6 +134,7 @@ export default function AtivosPage() {
       const { data } = await api.get("/asset-types");
       setAssetTypes(Array.isArray(data) ? data : data.data || []);
     } catch {
+      toast.error("Erro ao carregar dados");
       setAssetTypes([]);
     }
   }, []);
@@ -225,6 +228,7 @@ export default function AtivosPage() {
             </div>
           ) : (
             <>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -285,6 +289,7 @@ export default function AtivosPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Pagination */}
               <div className="flex items-center justify-between px-4 py-3 border-t">

@@ -73,6 +73,38 @@ docker logs multigest-web
 curl http://localhost:3001/api/docs
 ```
 
+## Deploy via pacote (sem Git)
+
+No Windows, criar o pacote:
+
+```powershell
+.\criar-deploy.ps1
+```
+
+Depois enviar para a VPS e extrair:
+
+```bash
+scp multigest-deploy.tar.gz root@srv1353769.hstgr.cloud:/opt/
+ssh root@srv1353769.hstgr.cloud
+cd /opt && rm -rf multigest && mkdir multigest && tar -xzf multigest-deploy.tar.gz -C multigest
+cd multigest && bash deploy.sh
+```
+
+---
+
+## Atualizar deploy (quando já está rodando)
+
+**Via Git:**
+```bash
+cd /opt/multigest
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+**Via pacote:** rodar `criar-deploy.ps1`, enviar o tar.gz, extrair em cima da pasta existente e `bash deploy.sh`.
+
+---
+
 ## Acessar o sistema
 
 - Frontend: http://srv1353769.hstgr.cloud:3000

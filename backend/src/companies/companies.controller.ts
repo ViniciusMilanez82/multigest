@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
@@ -29,25 +30,29 @@ export class CompaniesController {
 
   @Get()
   @ApiOperation({ summary: 'Listar empresas' })
-  findAll() {
-    return this.companiesService.findAll();
+  findAll(@Req() req: any) {
+    const companyIds = (req.user?.companies || []).map((c: any) => c.id || c.companyId).filter(Boolean);
+    return this.companiesService.findAll(companyIds);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar empresa por ID' })
-  findOne(@Param('id') id: string) {
-    return this.companiesService.findOne(id);
+  findOne(@Req() req: any, @Param('id') id: string) {
+    const companyIds = (req.user?.companies || []).map((c: any) => c.id || c.companyId).filter(Boolean);
+    return this.companiesService.findOne(id, companyIds);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar empresa' })
-  update(@Param('id') id: string, @Body() dto: UpdateCompanyDto) {
-    return this.companiesService.update(id, dto);
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateCompanyDto) {
+    const companyIds = (req.user?.companies || []).map((c: any) => c.id || c.companyId).filter(Boolean);
+    return this.companiesService.update(id, dto, companyIds);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar empresa' })
-  remove(@Param('id') id: string) {
-    return this.companiesService.remove(id);
+  remove(@Req() req: any, @Param('id') id: string) {
+    const companyIds = (req.user?.companies || []).map((c: any) => c.id || c.companyId).filter(Boolean);
+    return this.companiesService.remove(id, companyIds);
   }
 }

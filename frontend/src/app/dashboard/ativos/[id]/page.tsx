@@ -38,6 +38,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Pencil,
@@ -51,6 +52,8 @@ import {
   Ruler,
   Factory,
   FileText,
+  Plus,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,18 +67,29 @@ interface Asset {
   code: string;
   serialNumber?: string;
   manufacturer?: string;
-  yearManufactured?: number;
+  manufacturingYear?: number;
   width?: number;
   height?: number;
   length?: number;
   condition: string;
   status: string;
   currentLocation?: string;
+  currentLocationId?: string;
+  currentStockLocation?: { id: string; name: string; customer?: { razaoSocial: string } | null };
   dailyRate: number | string;
   notes?: string;
   assetType?: AssetType;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface LocationHistory {
+  id: string;
+  movementDate: string;
+  movementType: string;
+  notes?: string;
+  fromLocation?: { id: string; name: string; customer?: { razaoSocial: string } | null } | null;
+  toLocation: { id: string; name: string; customer?: { razaoSocial: string } | null };
 }
 
 interface StatusHistory {
@@ -163,6 +177,7 @@ export default function AtivoDetalhePage() {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
   const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
+  const [locationHistory, setLocationHistory] = useState<LocationHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Status dialog state
@@ -206,7 +221,15 @@ export default function AtivoDetalhePage() {
     fetchAsset();
     fetchStatusHistory();
     fetchMaintenances();
+    fetchLocationHistory();
   }, [fetchAsset, fetchStatusHistory, fetchMaintenances]);
+
+  async function fetchLocationHistory() {
+    try {
+      const { data } = await api.get(`/api/stock-locations/asset/${id}/history`);
+      setLocationHistory(data);
+    } catch { }
+  }
 
   async function handleStatusChange() {
     if (!newStatus) return;
@@ -405,7 +428,7 @@ export default function AtivoDetalhePage() {
                   Ano de Fabricação
                 </div>
                 <p className="font-medium">
-                  {asset.yearManufactured || "—"}
+                  {asset.manufacturingYear || "—"}
                 </p>
               </div>
 
@@ -424,10 +447,12 @@ export default function AtivoDetalhePage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <MapPin className="w-4 h-4" />
-                  Localização
+                  Localização Atual
                 </div>
                 <p className="font-medium">
-                  {asset.currentLocation || "—"}
+                  {asset.currentStockLocation
+                    ? `${asset.currentStockLocation.name}${asset.currentStockLocation.customer ? ` (${asset.currentStockLocation.customer.razaoSocial})` : ""}`
+                    : asset.currentLocation || "—"}
                 </p>
               </div>
 
@@ -555,48 +580,59 @@ export default function AtivoDetalhePage() {
         </CardContent>
       </Card>
 
-      {/* Maintenances */}
+      {/* Maintenances with Add Dialog */}
+      <MaintenanceSection assetId={id} maintenances={maintenances} onRefresh={fetchMaintenances} />
+
+      {/* Historico de Movimentacao (por onde o container passou) */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Manutenções</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            Histórico de Movimentação
+          </CardTitle>
           <CardDescription>
-            Registro de manutenções realizadas no ativo
+            Por onde este container passou, com datas
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {maintenances.length === 0 ? (
+          {locationHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-500">
-              <Factory className="w-8 h-8 mb-2 text-gray-300" />
-              <p className="text-sm">Nenhuma manutenção registrada</p>
+              <MapPin className="w-8 h-8 mb-2 text-gray-300" />
+              <p className="text-sm">Nenhuma movimentação registrada</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Data</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Custo</TableHead>
-                  <TableHead>Data Início</TableHead>
-                  <TableHead>Data Fim</TableHead>
+                  <TableHead>De</TableHead>
+                  <TableHead>Para</TableHead>
+                  <TableHead>Obs</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {maintenances.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">
-                      {MAINTENANCE_TYPE_LABELS[m.type] || m.type}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-600 max-w-[250px] truncate">
-                      {m.description || "—"}
+                {locationHistory.map((lh) => (
+                  <TableRow key={lh.id}>
+                    <TableCell className="text-sm">
+                      {new Date(lh.movementDate).toLocaleDateString("pt-BR")}
                     </TableCell>
                     <TableCell>
-                      {m.cost ? formatCurrency(m.cost) : "—"}
+                      <Badge variant="outline" className="text-xs">
+                        {lh.movementType === "DELIVERY" ? "Entrega" : lh.movementType === "PICKUP" ? "Retirada" : lh.movementType === "SWAP" ? "Troca" : lh.movementType}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {formatDate(m.startDate)}
+                      {lh.fromLocation
+                        ? `${lh.fromLocation.name}${lh.fromLocation.customer ? ` (${lh.fromLocation.customer.razaoSocial})` : ""}`
+                        : "—"}
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {m.endDate ? formatDate(m.endDate) : "Em andamento"}
+                    <TableCell className="text-sm font-medium">
+                      {lh.toLocation.name}
+                      {lh.toLocation.customer ? ` (${lh.toLocation.customer.razaoSocial})` : ""}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {lh.notes || "—"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -606,5 +642,58 @@ export default function AtivoDetalhePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MaintenanceSection({ assetId, maintenances, onRefresh }: { assetId: string; maintenances: Maintenance[]; onRefresh: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ type: "CORRECTIVE", description: "", cost: "", startDate: "", endDate: "" });
+
+  const MAINTENANCE_TYPE_LABELS: Record<string, string> = { PREVENTIVE: "Preventiva", CORRECTIVE: "Corretiva", INSPECTION: "Inspeção" };
+
+  function formatCurrency(v: number | string) { const n = typeof v === "string" ? parseFloat(v) : v; if (isNaN(n)) return "R$ 0,00"; return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+  function formatDate(d: string) { try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return "—"; } }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.description || !form.startDate) { toast.error("Descrição e data de início são obrigatórios"); return; }
+    setSaving(true);
+    try {
+      const payload: any = { type: form.type, description: form.description, startDate: new Date(form.startDate).toISOString() };
+      if (form.cost) payload.cost = parseFloat(form.cost);
+      if (form.endDate) payload.endDate = new Date(form.endDate).toISOString();
+      await api.post(`/assets/${assetId}/maintenances`, payload);
+      toast.success("Manutenção registrada!"); setOpen(false); setForm({ type: "CORRECTIVE", description: "", cost: "", startDate: "", endDate: "" }); onRefresh();
+    } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSaving(false); }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div><CardTitle className="text-lg flex items-center gap-2"><Wrench className="w-5 h-5 text-blue-600" /> Manutenções</CardTitle><CardDescription>Registro de manutenções realizadas no ativo</CardDescription></div>
+        <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nova</Button></DialogTrigger>
+          <DialogContent><DialogHeader><DialogTitle>Nova Manutenção</DialogTitle></DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div><Label>Tipo</Label><Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CORRECTIVE">Corretiva</SelectItem><SelectItem value="PREVENTIVE">Preventiva</SelectItem><SelectItem value="INSPECTION">Inspeção</SelectItem></SelectContent></Select></div>
+              <div><Label>Descrição *</Label><Textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
+              <div className="grid grid-cols-2 gap-4"><div><Label>Data Início *</Label><Input type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} /></div><div><Label>Data Fim</Label><Input type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} /></div></div>
+              <div><Label>Custo (R$)</Label><Input type="number" step="0.01" value={form.cost} onChange={e => setForm(p => ({ ...p, cost: e.target.value }))} /></div>
+              <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Registrar"}</Button></DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent className="p-0">
+        {maintenances.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-500"><Factory className="w-8 h-8 mb-2 text-gray-300" /><p className="text-sm">Nenhuma manutenção registrada</p></div>
+        ) : (
+          <Table><TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Custo</TableHead><TableHead>Data Início</TableHead><TableHead>Data Fim</TableHead></TableRow></TableHeader>
+            <TableBody>{maintenances.map(m => (
+              <TableRow key={m.id}><TableCell className="font-medium">{MAINTENANCE_TYPE_LABELS[m.type] || m.type}</TableCell><TableCell className="text-sm text-gray-600 max-w-[250px] truncate">{m.description || "—"}</TableCell><TableCell>{m.cost ? formatCurrency(m.cost) : "—"}</TableCell><TableCell className="text-sm">{formatDate(m.startDate)}</TableCell><TableCell className="text-sm">{m.endDate ? formatDate(m.endDate) : "Em andamento"}</TableCell></TableRow>
+            ))}</TableBody></Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

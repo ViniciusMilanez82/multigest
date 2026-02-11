@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -17,26 +17,38 @@ export class CompaniesService {
     return this.prisma.company.create({ data: dto });
   }
 
-  async findAll() {
+  async findAll(companyIds: string[]) {
+    if (!companyIds.length) return [];
     return this.prisma.company.findMany({
-      where: { isActive: true },
+      where: { id: { in: companyIds }, isActive: true },
       orderBy: { razaoSocial: 'asc' },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, companyIds: string[]) {
+    if (!companyIds.length || !companyIds.includes(id)) {
+      throw new ForbiddenException('Você não tem acesso a esta empresa');
+    }
     const company = await this.prisma.company.findUnique({ where: { id } });
     if (!company) throw new NotFoundException('Empresa não encontrada');
     return company;
   }
 
-  async update(id: string, dto: UpdateCompanyDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateCompanyDto, companyIds: string[]) {
+    if (!companyIds.length || !companyIds.includes(id)) {
+      throw new ForbiddenException('Você não tem acesso a esta empresa');
+    }
+    const company = await this.prisma.company.findUnique({ where: { id } });
+    if (!company) throw new NotFoundException('Empresa não encontrada');
     return this.prisma.company.update({ where: { id }, data: dto });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, companyIds: string[]) {
+    if (!companyIds.length || !companyIds.includes(id)) {
+      throw new ForbiddenException('Você não tem acesso a esta empresa');
+    }
+    const company = await this.prisma.company.findUnique({ where: { id } });
+    if (!company) throw new NotFoundException('Empresa não encontrada');
     return this.prisma.company.update({
       where: { id },
       data: { isActive: false },

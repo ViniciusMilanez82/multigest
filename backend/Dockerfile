@@ -34,4 +34,4 @@ COPY --from=builder /app/prisma.config.ts ./
 
 EXPOSE 3001
 
-CMD ["node", "dist/src/main.js"]
+CMD npx prisma db push && node dist/src/main.js

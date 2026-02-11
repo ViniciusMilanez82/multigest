@@ -210,4 +210,30 @@ export class AssetsService {
       occupancyRate: Math.round(occupancyRate * 100) / 100,
     };
   }
+
+  // ─── MANUTENÇÕES ───
+
+  async addMaintenance(companyId: string, assetId: string, dto: any) {
+    await this.findOne(companyId, assetId);
+    return this.prisma.assetMaintenance.create({
+      data: {
+        assetId,
+        supplierId: dto.supplierId,
+        type: dto.type || 'CORRECTIVE',
+        description: dto.description,
+        cost: dto.cost,
+        startDate: new Date(dto.startDate),
+        endDate: dto.endDate ? new Date(dto.endDate) : null,
+        notes: dto.notes,
+      },
+    });
+  }
+
+  async listMaintenances(assetId: string) {
+    return this.prisma.assetMaintenance.findMany({
+      where: { assetId },
+      orderBy: { startDate: 'desc' },
+      include: { supplier: { select: { razaoSocial: true } } },
+    });
+  }
 }

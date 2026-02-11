@@ -50,7 +50,7 @@ export default function EditarAtivoPage() {
     code: "",
     serialNumber: "",
     manufacturer: "",
-    yearManufactured: "",
+    manufacturingYear: "",
     width: "",
     height: "",
     length: "",
@@ -80,7 +80,7 @@ export default function EditarAtivoPage() {
         code: data.code || "",
         serialNumber: data.serialNumber || "",
         manufacturer: data.manufacturer || "",
-        yearManufactured: data.yearManufactured ? String(data.yearManufactured) : "",
+        manufacturingYear: data.manufacturingYear ? String(data.manufacturingYear) : "",
         width: data.width ? String(data.width) : "",
         height: data.height ? String(data.height) : "",
         length: data.length ? String(data.length) : "",
@@ -136,7 +136,7 @@ export default function EditarAtivoPage() {
 
       if (form.serialNumber.trim()) payload.serialNumber = form.serialNumber.trim();
       if (form.manufacturer.trim()) payload.manufacturer = form.manufacturer.trim();
-      if (form.yearManufactured) payload.yearManufactured = parseInt(form.yearManufactured);
+      if (form.manufacturingYear) payload.manufacturingYear = parseInt(form.manufacturingYear);
       if (form.width) payload.width = parseFloat(form.width);
       if (form.height) payload.height = parseFloat(form.height);
       if (form.length) payload.length = parseFloat(form.length);
@@ -254,12 +254,12 @@ export default function EditarAtivoPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="yearManufactured">Ano Fabricação</Label>
+                  <Label htmlFor="manufacturingYear">Ano Fabricação</Label>
                   <Input
-                    id="yearManufactured"
+                    id="manufacturingYear"
                     type="number"
-                    value={form.yearManufactured}
-                    onChange={(e) => handleChange("yearManufactured", e.target.value)}
+                    value={form.manufacturingYear}
+                    onChange={(e) => handleChange("manufacturingYear", e.target.value)}
                     placeholder="Ex: 2024"
                   />
                 </div>
