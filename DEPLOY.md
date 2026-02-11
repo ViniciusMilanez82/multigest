@@ -1,7 +1,7 @@
 # MultiGest — Guia de Deploy na VPS Hostinger
 
 ## Pré-requisitos
-- VPS Hostinger com Docker (srv512168.hstgr.cloud)
+- VPS Hostinger com Docker (srv1353769.hstgr.cloud)
 - PostgreSQL já rodando no Docker Manager (postgresql-a6fb)
 - Acesso SSH à VPS
 
@@ -10,7 +10,7 @@
 ## Passo 1: Conectar via SSH
 
 ```bash
-ssh root@srv512168.hstgr.cloud
+ssh root@srv1353769.hstgr.cloud
 ```
 
 ## Passo 2: Clonar o repositório
@@ -28,7 +28,7 @@ cd multigest
 docker network ls
 
 # Encontrar a rede do PostgreSQL existente
-docker inspect postgresql-a6fb-postgresql-1 | grep NetworkMode
+docker inspect postgresql-ak9h-postgresql-1 | grep NetworkMode
 ```
 
 ## Passo 4: Configurar variáveis de ambiente
@@ -36,12 +36,12 @@ docker inspect postgresql-a6fb-postgresql-1 | grep NetworkMode
 ```bash
 # Criar .env para produção
 cat > .env.prod << 'EOF'
-DATABASE_URL=postgresql://A39bokKZClHrBqXC:ex4x8VZVSogaZL0Bpvj7oGNJkFoWbT0K@postgresql-a6fb-postgresql-1:5432/MHL6sIvZvAqZsACp
+DATABASE_URL=postgresql://A39bokKZClHrBqXC:ex4x8VZVSogaZL0Bpvj7oGNJkFoWbT0K@postgresql-ak9h-postgresql-1:5432/MHL6sIvZvAqZsACp
 JWT_SECRET=gere-uma-string-aleatoria-longa-aqui
 JWT_EXPIRES_IN=8h
 PORT=3001
 NODE_ENV=production
-FRONTEND_URL=http://srv512168.hstgr.cloud:3000
+FRONTEND_URL=http://srv1353769.hstgr.cloud:3000
 EOF
 ```
 
@@ -75,8 +75,8 @@ curl http://localhost:3001/api/docs
 
 ## Acessar o sistema
 
-- Frontend: http://srv512168.hstgr.cloud:3000
-- API Docs: http://srv512168.hstgr.cloud:3001/api/docs
+- Frontend: http://srv1353769.hstgr.cloud:3000
+- API Docs: http://srv1353769.hstgr.cloud:3001/api/docs
 - Login: admin@multigest.com.br / admin123
 
 ---
@@ -87,7 +87,7 @@ Para desenvolver localmente conectado ao banco da VPS:
 
 ```bash
 # Abrir túnel SSH para o PostgreSQL
-ssh -L 5432:postgresql-a6fb-postgresql-1:5432 root@srv512168.hstgr.cloud
+ssh -L 5432:postgresql-ak9h-postgresql-1:5432 root@srv1353769.hstgr.cloud
 
 # No .env do backend, usar:
 DATABASE_URL="postgresql://A39bokKZClHrBqXC:ex4x8VZVSogaZL0Bpvj7oGNJkFoWbT0K@localhost:5432/MHL6sIvZvAqZsACp"
