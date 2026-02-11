@@ -7,13 +7,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    super({
-      datasources: {
-        db: {
-          url: process.env['DATABASE_URL'],
-        },
-      },
-    } as ConstructorParameters<typeof PrismaClient>[0]);
+    super();
   }
 
   async onModuleInit() {
