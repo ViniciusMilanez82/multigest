@@ -13,8 +13,8 @@ export default function DriverDetailPage() {
   const router = useRouter(); const params = useParams();
   const [driver, setDriver] = useState<any>(null); const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.get(`/api/fleet/drivers/${params.id}`).then(r => setDriver(r.data)).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/drivers"); }).finally(() => setLoading(false)); }, []);
-  async function handleDelete() { try { await api.delete(`/api/fleet/drivers/${params.id}`); toast.success("Excluído"); router.push("/dashboard/drivers"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
+  useEffect(() => { api.get(`/fleet/drivers/${params.id}`).then(r => setDriver(r.data)).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/drivers"); }).finally(() => setLoading(false)); }, []);
+  async function handleDelete() { try { await api.delete(`/fleet/drivers/${params.id}`); toast.success("Excluído"); router.push("/dashboard/drivers"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;
   if (!driver) return null;

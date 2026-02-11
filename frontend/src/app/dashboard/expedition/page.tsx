@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2, Truck, Ban, ExternalLink, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Package, Loader2, Truck, Ban, ExternalLink, Calendar, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExpeditionItem {
@@ -31,11 +32,15 @@ function formatDate(d: string) {
 }
 
 export default function ExpeditionPage() {
-  const router = useRouter();
   const [items, setItems] = useState<ExpeditionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editItem, setEditItem] = useState<ExpeditionItem | null>(null);
+  const [editForm, setEditForm] = useState({ scheduledDeliveryDate: "", deliveryBlockedReason: "" });
+  const [saving, setSaving] = useState(false);
+  const [serviceOrders, setServiceOrders] = useState<any[]>([]);
 
   const fetchExpedition = async () => {
     setLoading(true);
@@ -44,7 +49,8 @@ export default function ExpeditionPage() {
       if (start) params.set("start", start);
       if (end) params.set("end", end);
       const { data } = await api.get(`/dashboard/expedition?${params}`);
-      setItems(Array.isArray(data) ? data : []);
+      setItems(Array.isArray(data) ? data : data?.items || []);
+      setServiceOrders(data?.serviceOrders || []);
     } catch {
       toast.error("Erro ao carregar painel de expedição.");
     } finally {
@@ -67,7 +73,8 @@ export default function ExpeditionPage() {
         params.set("start", s);
         params.set("end", e);
         const { data } = await api.get(`/dashboard/expedition?${params}`);
-        setItems(Array.isArray(data) ? data : []);
+        setItems(Array.isArray(data) ? data : data?.items || []);
+        setServiceOrders(data?.serviceOrders || []);
       } catch {
         toast.error("Erro ao carregar painel de expedição.");
       } finally {
@@ -76,6 +83,34 @@ export default function ExpeditionPage() {
     };
     load();
   }, []);
+
+  function openEdit(item: ExpeditionItem) {
+    setEditItem(item);
+    setEditForm({
+      scheduledDeliveryDate: item.scheduledDeliveryDate ? item.scheduledDeliveryDate.slice(0, 10) : "",
+      deliveryBlockedReason: item.deliveryBlockedReason || "",
+    });
+    setEditOpen(true);
+  }
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editItem) return;
+    setSaving(true);
+    try {
+      await api.patch(`/contracts/${editItem.contractId}/items/${editItem.id}/delivery`, {
+        scheduledDeliveryDate: editForm.scheduledDeliveryDate ? new Date(editForm.scheduledDeliveryDate).toISOString() : undefined,
+        deliveryBlockedReason: editForm.deliveryBlockedReason || null,
+      });
+      toast.success("Atualizado!");
+      setEditOpen(false);
+      setEditItem(null);
+      fetchExpedition();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading && items.length === 0) {
     return (
@@ -238,11 +273,10 @@ export default function ExpeditionPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(row)} title="Agendar/Editar"><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/contracts/${row.contractId}`}>
-                          <ExternalLink className="w-4 h-4" />
-                        </Link>
+                        <Link href={`/dashboard/contracts/${row.contractId}`} title="Ver contrato"><ExternalLink className="w-4 h-4" /></Link>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -252,6 +286,45 @@ export default function ExpeditionPage() {
           )}
         </CardContent>
       </Card>
+
+      {serviceOrders.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ordens de Serviço</CardTitle>
+            <CardDescription>OS agendadas no período</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader><TableRow><TableHead>Nº</TableHead><TableHead>Tipo</TableHead><TableHead>Contrato</TableHead><TableHead>Cliente</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {serviceOrders.map((o: any) => (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-mono font-medium">{o.orderNumber}</TableCell>
+                    <TableCell><Badge variant="outline">{o.type}</Badge></TableCell>
+                    <TableCell><Link href={`/dashboard/contracts/${o.contractId}`} className="text-blue-600 hover:underline">{o.contract?.contractNumber}</Link></TableCell>
+                    <TableCell>{o.contract?.customer?.razaoSocial || o.contract?.customer?.nomeFantasia || "—"}</TableCell>
+                    <TableCell className="text-sm">{o.scheduledDate ? formatDate(o.scheduledDate) : "—"}</TableCell>
+                    <TableCell><Badge variant="secondary">{o.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent><DialogHeader><DialogTitle>Agendar / Bloquear Entrega</DialogTitle></DialogHeader>
+          {editItem && (
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <p className="text-sm text-gray-500">Contrato {editItem.contractNumber} — {editItem.assetCode}</p>
+              <div><Label>Data programada</Label><Input type="date" value={editForm.scheduledDeliveryDate} onChange={e => setEditForm(p => ({ ...p, scheduledDeliveryDate: e.target.value }))} /></div>
+              <div><Label>Motivo bloqueio</Label><Select value={editForm.deliveryBlockedReason || "none"} onValueChange={v => setEditForm(p => ({ ...p, deliveryBlockedReason: v === "none" ? "" : v }))}><SelectTrigger><SelectValue placeholder="Liberado" /></SelectTrigger><SelectContent><SelectItem value="none">Liberado</SelectItem><SelectItem value="PAGAMENTO_PENDENTE">Pagamento pendente</SelectItem><SelectItem value="CONTRATO_NAO_ASSINADO">Contrato não assinado</SelectItem></SelectContent></Select></div>
+              <DialogFooter><Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button></DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

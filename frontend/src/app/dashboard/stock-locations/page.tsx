@@ -46,7 +46,7 @@ export default function StockLocationsPage() {
 
   useEffect(() => { fetchLocations(); }, [search]);
   useEffect(() => {
-    api.get("/api/customers", { params: { limit: 500 } }).then(r => setCustomers(r.data.data)).catch(() => {});
+    api.get("/customers", { params: { limit: 500 } }).then(r => setCustomers(r.data.data)).catch(() => {});
   }, []);
 
   async function fetchLocations() {
@@ -54,7 +54,7 @@ export default function StockLocationsPage() {
       setLoading(true);
       const params: any = {};
       if (search) params.search = search;
-      const res = await api.get("/api/stock-locations", { params });
+      const res = await api.get("/stock-locations", { params });
       setLocations(res.data);
     } catch { toast.error("Erro ao carregar locais"); } finally { setLoading(false); }
   }
@@ -67,7 +67,7 @@ export default function StockLocationsPage() {
       const payload: any = { name: form.name };
       if (form.address) payload.address = form.address;
       if (form.customerId && form.customerId !== "none") payload.customerId = form.customerId;
-      await api.post("/api/stock-locations", payload);
+      await api.post("/stock-locations", payload);
       toast.success("Local criado!");
       setDialogOpen(false);
       setForm({ name: "", address: "", customerId: "" });
@@ -79,7 +79,7 @@ export default function StockLocationsPage() {
 
   async function handleDelete(id: string) {
     try {
-      await api.delete(`/api/stock-locations/${id}`);
+      await api.delete(`/stock-locations/${id}`);
       toast.success("Local removido");
       fetchLocations();
     } catch (err: any) {

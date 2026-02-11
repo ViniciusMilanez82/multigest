@@ -16,9 +16,9 @@ export default function BiddingDetailPage() {
   const router = useRouter(); const params = useParams();
   const [bidding, setBidding] = useState<any>(null); const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.get(`/api/biddings/${params.id}`).then(r => setBidding(r.data)).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/biddings"); }).finally(() => setLoading(false)); }, []);
-  async function handleDelete() { try { await api.delete(`/api/biddings/${params.id}`); toast.success("Excluído"); router.push("/dashboard/biddings"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
-  async function changeStatus(s: string) { try { await api.put(`/api/biddings/${params.id}`, { status: s }); setBidding((p: any) => ({ ...p, status: s })); toast.success("Status atualizado"); } catch { toast.error("Erro"); } }
+  useEffect(() => { api.get(`/biddings/${params.id}`).then(r => setBidding(r.data)).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/biddings"); }).finally(() => setLoading(false)); }, []);
+  async function handleDelete() { try { await api.delete(`/biddings/${params.id}`); toast.success("Excluído"); router.push("/dashboard/biddings"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
+  async function changeStatus(s: string) { try { await api.put(`/biddings/${params.id}`, { status: s }); setBidding((p: any) => ({ ...p, status: s })); toast.success("Status atualizado"); } catch { toast.error("Erro"); } }
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;
   if (!bidding) return null;

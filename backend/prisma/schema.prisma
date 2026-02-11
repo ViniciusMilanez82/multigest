@@ -401,6 +401,7 @@ model Contract {
   analyses     ContractAnalysis[]
   supplyOrders SupplyOrder[]
   serviceOrders ServiceOrder[]
+  proposal     Proposal?
   addendums    ContractAddendum[]
   measurements Measurement[]
   movements    ContractMovement[]
@@ -906,13 +907,14 @@ model Proposal {
   contactName    String?       @map("contact_name")
   phone          String?
   email          String?
-  contractId     String?       @map("contract_id")
+  contractId     String?       @unique @map("contract_id")
   invoiceId      String?       @map("invoice_id")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   company  Company   @relation(fields: [companyId], references: [id])
   customer Customer? @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
 
   @@unique([companyId, proposalNumber])
   @@index([companyId])

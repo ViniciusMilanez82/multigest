@@ -49,7 +49,7 @@ export default function NewVehiclePage() {
       if (form.loadCapacityKg) payload.loadCapacityKg = parseFloat(form.loadCapacityKg);
       if (form.currentKm) payload.currentKm = parseInt(form.currentKm);
 
-      const res = await api.post("/api/vehicles", payload);
+      const res = await api.post("/vehicles", payload);
       toast.success("Veículo cadastrado com sucesso!");
       router.push(`/dashboard/fleet/${res.data.id}`);
     } catch (err: any) {

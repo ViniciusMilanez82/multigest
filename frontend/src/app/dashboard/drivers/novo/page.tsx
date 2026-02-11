@@ -21,7 +21,7 @@ export default function NewDriverPage() {
       setLoading(true);
       const payload: any = { name: form.name, cpf: form.cpf, cnh: form.cnh, cnhCategory: form.cnhCategory, cnhExpiry: new Date(form.cnhExpiry).toISOString() };
       if (form.phone) payload.phone = form.phone;
-      await api.post("/api/fleet/drivers", payload);
+      await api.post("/fleet/drivers", payload);
       toast.success("Motorista cadastrado!"); router.push("/dashboard/drivers");
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setLoading(false); }
   }

@@ -226,7 +226,7 @@ export default function AtivoDetalhePage() {
 
   async function fetchLocationHistory() {
     try {
-      const { data } = await api.get(`/api/stock-locations/asset/${id}/history`);
+      const { data } = await api.get(`/stock-locations/asset/${id}/history`);
       setLocationHistory(data);
     } catch { }
   }

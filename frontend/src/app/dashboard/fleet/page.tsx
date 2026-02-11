@@ -47,7 +47,7 @@ export default function FleetPage() {
       const params: any = { limit: 50 };
       if (search) params.search = search;
       if (status) params.status = status;
-      const res = await api.get("/api/vehicles", { params });
+      const res = await api.get("/vehicles", { params });
       setVehicles(res.data.data);
       setTotal(res.data.total);
     } catch {

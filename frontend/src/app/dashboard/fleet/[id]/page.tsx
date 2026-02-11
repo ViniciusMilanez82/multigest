@@ -52,19 +52,19 @@ export default function VehicleDetailPage() {
     if (tab === "checklist") fetchChecklists();
   }, [tab]);
 
-  async function fetchVehicle() { try { const r = await api.get(`/api/vehicles/${params.id}`); setVehicle(r.data); setFuelRecords(r.data.fuelRecords || []); setMaintenances(r.data.maintenances || []); } catch { toast.error("Não encontrado"); router.push("/dashboard/fleet"); } finally { setLoading(false); } }
-  async function fetchFuelRecords() { try { const r = await api.get(`/api/vehicles/${params.id}/fuel`); setFuelRecords(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar abastecimentos"); } }
-  async function fetchMaintenances() { try { const r = await api.get(`/api/vehicles/${params.id}/maintenances`); setMaintenances(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar manutenções"); } }
-  async function fetchChecklists() { try { const r = await api.get(`/api/vehicles/${params.id}/checklists`); setChecklists(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar checklists"); } }
+  async function fetchVehicle() { try { const r = await api.get(`/vehicles/${params.id}`); setVehicle(r.data); setFuelRecords(r.data.fuelRecords || []); setMaintenances(r.data.maintenances || []); } catch { toast.error("Não encontrado"); router.push("/dashboard/fleet"); } finally { setLoading(false); } }
+  async function fetchFuelRecords() { try { const r = await api.get(`/vehicles/${params.id}/fuel`); setFuelRecords(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar abastecimentos"); } }
+  async function fetchMaintenances() { try { const r = await api.get(`/vehicles/${params.id}/maintenances`); setMaintenances(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar manutenções"); } }
+  async function fetchChecklists() { try { const r = await api.get(`/vehicles/${params.id}/checklists`); setChecklists(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar checklists"); } }
 
-  async function handleDelete() { try { await api.delete(`/api/vehicles/${params.id}`); toast.success("Excluído"); router.push("/dashboard/fleet"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
+  async function handleDelete() { try { await api.delete(`/vehicles/${params.id}`); toast.success("Excluído"); router.push("/dashboard/fleet"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
 
   async function handleAddFuel(e: React.FormEvent) {
     e.preventDefault();
     if (!fuelForm.date || !fuelForm.liters || !fuelForm.totalCost) { toast.error("Preencha data, litros e custo total"); return; }
     setSavingFuel(true);
     try {
-      await api.post(`/api/vehicles/${params.id}/fuel`, { date: new Date(fuelForm.date).toISOString(), fuelType: fuelForm.fuelType, liters: parseFloat(fuelForm.liters), pricePerLiter: fuelForm.pricePerLiter ? parseFloat(fuelForm.pricePerLiter) : undefined, totalCost: parseFloat(fuelForm.totalCost), km: fuelForm.km ? parseInt(fuelForm.km) : undefined, station: fuelForm.station || undefined });
+      await api.post(`/vehicles/${params.id}/fuel`, { date: new Date(fuelForm.date).toISOString(), fuelType: fuelForm.fuelType, liters: parseFloat(fuelForm.liters), pricePerLiter: fuelForm.pricePerLiter ? parseFloat(fuelForm.pricePerLiter) : undefined, totalCost: parseFloat(fuelForm.totalCost), km: fuelForm.km ? parseInt(fuelForm.km) : undefined, station: fuelForm.station || undefined });
       toast.success("Abastecimento registrado!"); setFuelDialogOpen(false); setFuelForm({ date: "", fuelType: "DIESEL", liters: "", pricePerLiter: "", totalCost: "", km: "", station: "" }); fetchFuelRecords();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingFuel(false); }
   }
@@ -74,7 +74,7 @@ export default function VehicleDetailPage() {
     if (!maintForm.description || !maintForm.startDate) { toast.error("Descrição e data de início obrigatórios"); return; }
     setSavingMaint(true);
     try {
-      await api.post(`/api/vehicles/${params.id}/maintenances`, { type: maintForm.type, description: maintForm.description, cost: maintForm.cost ? parseFloat(maintForm.cost) : undefined, startDate: new Date(maintForm.startDate).toISOString(), endDate: maintForm.endDate ? new Date(maintForm.endDate).toISOString() : undefined, supplier: maintForm.supplier || undefined });
+      await api.post(`/vehicles/${params.id}/maintenances`, { type: maintForm.type, description: maintForm.description, cost: maintForm.cost ? parseFloat(maintForm.cost) : undefined, startDate: new Date(maintForm.startDate).toISOString(), endDate: maintForm.endDate ? new Date(maintForm.endDate).toISOString() : undefined, supplier: maintForm.supplier || undefined });
       toast.success("Manutenção registrada!"); setMaintDialogOpen(false); setMaintForm({ type: "CORRECTIVE", description: "", cost: "", startDate: "", endDate: "", supplier: "" }); fetchMaintenances();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingMaint(false); }
   }
@@ -84,7 +84,7 @@ export default function VehicleDetailPage() {
     if (!checkForm.date) { toast.error("Data obrigatória"); return; }
     setSavingCheck(true);
     try {
-      await api.post(`/api/vehicles/${params.id}/checklists`, { date: new Date(checkForm.date).toISOString(), km: checkForm.km ? parseInt(checkForm.km) : undefined, items: { tires: checkForm.tires, brakes: checkForm.brakes, lights: checkForm.lights, engine: checkForm.engine, bodywork: checkForm.bodywork }, notes: checkForm.notes || undefined });
+      await api.post(`/vehicles/${params.id}/checklists`, { date: new Date(checkForm.date).toISOString(), km: checkForm.km ? parseInt(checkForm.km) : undefined, items: { tires: checkForm.tires, brakes: checkForm.brakes, lights: checkForm.lights, engine: checkForm.engine, bodywork: checkForm.bodywork }, notes: checkForm.notes || undefined });
       toast.success("Checklist registrado!"); setCheckDialogOpen(false); setCheckForm({ date: "", km: "", tires: "OK", brakes: "OK", lights: "OK", engine: "OK", bodywork: "OK", notes: "" }); fetchChecklists();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingCheck(false); }
   }

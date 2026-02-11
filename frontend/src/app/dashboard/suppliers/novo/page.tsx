@@ -25,7 +25,7 @@ export default function NewSupplierPage() {
       if (form.nomeFantasia) payload.nomeFantasia = form.nomeFantasia;
       if (form.category) payload.category = form.category;
       if (form.notes) payload.notes = form.notes;
-      const res = await api.post("/api/suppliers", payload);
+      const res = await api.post("/suppliers", payload);
       toast.success("Fornecedor cadastrado!"); router.push(`/dashboard/suppliers/${res.data.id}`);
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro ao cadastrar"); } finally { setLoading(false); }
   }

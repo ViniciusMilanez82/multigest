@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
   ArrowLeft,
   Send,
@@ -17,6 +18,8 @@ import {
   MessageCircle,
   Mail,
   FileDown,
+  ExternalLink,
+  FileCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -126,11 +129,12 @@ export default function PropostaDetailPage() {
     }
     setActionLoading("convert");
     try {
-      await api.post(`/proposals/${id}/convert-to-contract`, convertForm);
+      const { data } = await api.post(`/proposals/${id}/convert-to-contract`, convertForm);
       setConvertModal(null);
-      setProposal((p: any) => ({ ...p, status: "CONVERTIDA" }));
+      setProposal((p: any) => ({ ...p, status: "CONVERTIDA", contractId: data?.id, contract: data }));
       toast.success("Proposta convertida em contrato");
       fetch();
+      if (data?.id) router.push(`/dashboard/contracts/${data.id}`);
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Erro");
     } finally {
@@ -307,6 +311,59 @@ export default function PropostaDetailPage() {
           )}
         </div>
       </div>
+
+      {proposal.status === "ACEITA" && proposal.type !== "VENDA" && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <FileCheck className="w-5 h-5" />
+              Proposta aceita — Fechar e gerar contrato
+            </CardTitle>
+            <CardDescription className="text-green-700">
+              Clique em &quot;Converter em Contrato&quot; para dar continuidade e criar o contrato a partir desta proposta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              size="lg"
+              onClick={() => {
+                setConvertForm({
+                  startDate: new Date().toISOString().split("T")[0],
+                  endDate: "",
+                  paymentTerms: "30 dias",
+                  paymentMethod: "BOLETO",
+                });
+                setConvertModal("contract");
+              }}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Converter em Contrato
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {proposal.status === "CONVERTIDA" && proposal.contractId && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <FileCheck className="w-5 h-5" />
+              Contrato gerado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-blue-700 mb-3">
+              Esta proposta foi convertida em contrato.
+            </p>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/contracts/${proposal.contractId}`} className="gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Ver contrato {proposal.contract?.contractNumber || ""}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

@@ -69,7 +69,7 @@ export default function InvoiceDetailPage() {
 
   async function fetchInvoice() {
     try {
-      const res = await api.get(`/api/invoices/${params.id}`);
+      const res = await api.get(`/invoices/${params.id}`);
       setInvoice(res.data);
     } catch {
       toast.error("Fatura não encontrada");
@@ -87,7 +87,7 @@ export default function InvoiceDetailPage() {
     }
     try {
       setPaymentLoading(true);
-      await api.post(`/api/invoices/${params.id}/payments`, {
+      await api.post(`/invoices/${params.id}/payments`, {
         paymentDate: payment.paymentDate,
         amount: parseFloat(payment.amount),
         paymentMethod: payment.paymentMethod,
@@ -306,7 +306,7 @@ function CollectionActionsSection({ invoiceId, actions, onRefresh, status, remai
     if (!actionForm.description) { toast.error("Descrição obrigatória"); return; }
     setSavingAction(true);
     try {
-      await api.post(`/api/invoices/${invoiceId}/collection-actions`, { type: actionForm.type, description: actionForm.description, contactedPerson: actionForm.contactedPerson || undefined, result: actionForm.result || undefined });
+      await api.post(`/invoices/${invoiceId}/collection-actions`, { type: actionForm.type, description: actionForm.description, contactedPerson: actionForm.contactedPerson || undefined, result: actionForm.result || undefined });
       toast.success("Ação registrada!"); setActionOpen(false); setActionForm({ type: "PHONE_CALL", description: "", contactedPerson: "", result: "" }); onRefresh();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingAction(false); }
   }
@@ -316,7 +316,7 @@ function CollectionActionsSection({ invoiceId, actions, onRefresh, status, remai
     if (!agreementForm.totalAmount || !agreementForm.firstDueDate) { toast.error("Preencha valor e data"); return; }
     setSavingAgreement(true);
     try {
-      await api.post(`/api/invoices/${invoiceId}/agreements`, { totalAmount: parseFloat(agreementForm.totalAmount), installments: parseInt(agreementForm.installments), firstDueDate: new Date(agreementForm.firstDueDate).toISOString(), notes: agreementForm.notes || undefined });
+      await api.post(`/invoices/${invoiceId}/agreements`, { totalAmount: parseFloat(agreementForm.totalAmount), installments: parseInt(agreementForm.installments), firstDueDate: new Date(agreementForm.firstDueDate).toISOString(), notes: agreementForm.notes || undefined });
       toast.success("Acordo criado!"); setAgreementOpen(false); setAgreementForm({ totalAmount: "", installments: "1", firstDueDate: "", notes: "" }); onRefresh();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingAgreement(false); }
   }
@@ -326,7 +326,7 @@ function CollectionActionsSection({ invoiceId, actions, onRefresh, status, remai
     if (!defaulterForm.reason) { toast.error("Motivo obrigatório"); return; }
     setSavingDefaulter(true);
     try {
-      await api.post(`/api/invoices/defaulters`, { invoiceId, reason: defaulterForm.reason, notes: defaulterForm.notes || undefined });
+      await api.post(`/invoices/defaulters`, { invoiceId, reason: defaulterForm.reason, notes: defaulterForm.notes || undefined });
       toast.success("Inadimplente registrado!"); setDefaulterOpen(false); setDefaulterForm({ reason: "", notes: "" }); onRefresh();
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setSavingDefaulter(false); }
   }

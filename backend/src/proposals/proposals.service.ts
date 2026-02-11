@@ -81,7 +81,10 @@ export class ProposalsService {
   async get(companyId: string, id: string) {
     const p = await this.prisma.proposal.findFirst({
       where: { id, companyId },
-      include: { customer: true },
+      include: {
+        customer: true,
+        contract: { select: { id: true, contractNumber: true } },
+      },
     });
     if (!p) throw new NotFoundException('Proposta não encontrada');
     return p;

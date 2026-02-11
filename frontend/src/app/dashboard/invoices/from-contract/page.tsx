@@ -65,7 +65,7 @@ export default function InvoiceFromContractPage() {
   const [itemsBilling, setItemsBilling] = useState<ItemBilling[]>([]);
 
   useEffect(() => {
-    api.get("/api/contracts", { params: { limit: 500, status: "ACTIVE" } })
+    api.get("/contracts", { params: { limit: 500, status: "ACTIVE" } })
       .then(r => setContracts(r.data.data))
       .catch(() => toast.error("Erro ao carregar contratos"));
     api.get("/invoices/next-number")
@@ -116,7 +116,7 @@ export default function InvoiceFromContractPage() {
   async function fetchContract(id: string) {
     try {
       setLoading(true);
-      const res = await api.get(`/api/contracts/${id}`);
+      const res = await api.get(`/contracts/${id}`);
       const contract = res.data;
       setSelectedContract(contract);
       setItemsBilling(
@@ -192,7 +192,7 @@ export default function InvoiceFromContractPage() {
         })),
       };
 
-      const res = await api.post("/api/invoices/from-contract", payload);
+      const res = await api.post("/invoices/from-contract", payload);
       toast.success("Fatura gerada com sucesso!");
       router.push(`/dashboard/invoices/${res.data.id}`);
     } catch (err: any) {

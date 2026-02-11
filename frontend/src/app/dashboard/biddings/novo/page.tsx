@@ -28,7 +28,7 @@ export default function NewBiddingPage() {
       if (form.openingDate) payload.openingDate = new Date(form.openingDate).toISOString();
       if (form.estimatedValue) payload.estimatedValue = parseFloat(form.estimatedValue);
       if (form.notes) payload.notes = form.notes;
-      const res = await api.post("/api/biddings", payload);
+      const res = await api.post("/biddings", payload);
       toast.success("Licitação cadastrada!"); router.push(`/dashboard/biddings/${res.data.id}`);
     } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); } finally { setLoading(false); }
   }

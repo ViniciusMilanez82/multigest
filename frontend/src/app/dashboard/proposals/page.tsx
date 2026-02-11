@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileCheck } from "lucide-react";
+import { Plus, Search, FileCheck, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -130,6 +131,7 @@ export default function ProposalsPage() {
                 <th className="px-4 py-3 text-left font-medium">Cliente</th>
                 <th className="px-4 py-3 text-left font-medium">Valor</th>
                 <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left font-medium w-24"></th>
               </tr>
             </thead>
             <tbody>
@@ -162,6 +164,15 @@ export default function ProposalsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={s.variant}>{s.label}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.status === "CONVERTIDA" && p.contractId && (
+                        <Button variant="ghost" size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                          <Link href={`/dashboard/contracts/${p.contractId}`} title="Ver contrato">
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 );

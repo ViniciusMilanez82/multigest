@@ -14,11 +14,11 @@ export default function EditDriverPage() {
   const [form, setForm] = useState({ name: "", cpf: "", cnh: "", cnhCategory: "", cnhExpiry: "", phone: "", isActive: true });
   function set(f: string, v: any) { setForm(p => ({ ...p, [f]: v })); }
 
-  useEffect(() => { api.get(`/api/fleet/drivers/${params.id}`).then(r => { const d = r.data; setForm({ name: d.name || "", cpf: d.cpf || "", cnh: d.cnh || "", cnhCategory: d.cnhCategory || "", cnhExpiry: d.cnhExpiry ? d.cnhExpiry.split("T")[0] : "", phone: d.phone || "", isActive: d.isActive ?? true }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/drivers"); }).finally(() => setFetching(false)); }, []);
+  useEffect(() => { api.get(`/fleet/drivers/${params.id}`).then(r => { const d = r.data; setForm({ name: d.name || "", cpf: d.cpf || "", cnh: d.cnh || "", cnhCategory: d.cnhCategory || "", cnhExpiry: d.cnhExpiry ? d.cnhExpiry.split("T")[0] : "", phone: d.phone || "", isActive: d.isActive ?? true }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/drivers"); }).finally(() => setFetching(false)); }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    try { setLoading(true); await api.put(`/api/fleet/drivers/${params.id}`, { ...form, cnhExpiry: new Date(form.cnhExpiry).toISOString() }); toast.success("Atualizado!"); router.push(`/dashboard/drivers/${params.id}`); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } finally { setLoading(false); }
+    try { setLoading(true); await api.put(`/fleet/drivers/${params.id}`, { ...form, cnhExpiry: new Date(form.cnhExpiry).toISOString() }); toast.success("Atualizado!"); router.push(`/dashboard/drivers/${params.id}`); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } finally { setLoading(false); }
   }
 
   if (fetching) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;

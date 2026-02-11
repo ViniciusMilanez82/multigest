@@ -53,7 +53,7 @@ export default function InvoicesPage() {
       const params: any = { limit: 50 };
       if (search) params.search = search;
       if (status) params.status = status;
-      const res = await api.get("/api/invoices", { params });
+      const res = await api.get("/invoices", { params });
       setInvoices(res.data.data);
       setTotal(res.data.total);
     } catch {
@@ -65,7 +65,7 @@ export default function InvoicesPage() {
 
   async function fetchStats() {
     try {
-      const res = await api.get("/api/invoices/stats");
+      const res = await api.get("/invoices/stats");
       setStats(res.data);
     } catch {
       toast.error("Erro ao carregar dados");

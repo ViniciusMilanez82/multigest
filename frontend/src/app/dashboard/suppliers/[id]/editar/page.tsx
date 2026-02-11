@@ -16,11 +16,11 @@ export default function EditSupplierPage() {
   const [form, setForm] = useState({ type: "JURIDICA", cpfCnpj: "", razaoSocial: "", nomeFantasia: "", category: "", notes: "" });
   function set(f: string, v: string) { setForm(p => ({ ...p, [f]: v })); }
 
-  useEffect(() => { api.get(`/api/suppliers/${params.id}`).then(r => { const s = r.data; setForm({ type: s.type || "JURIDICA", cpfCnpj: s.cpfCnpj || "", razaoSocial: s.razaoSocial || "", nomeFantasia: s.nomeFantasia || "", category: s.category || "", notes: s.notes || "" }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/suppliers"); }).finally(() => setFetching(false)); }, []);
+  useEffect(() => { api.get(`/suppliers/${params.id}`).then(r => { const s = r.data; setForm({ type: s.type || "JURIDICA", cpfCnpj: s.cpfCnpj || "", razaoSocial: s.razaoSocial || "", nomeFantasia: s.nomeFantasia || "", category: s.category || "", notes: s.notes || "" }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/suppliers"); }).finally(() => setFetching(false)); }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    try { setLoading(true); await api.put(`/api/suppliers/${params.id}`, { type: form.type, cpfCnpj: form.cpfCnpj, razaoSocial: form.razaoSocial, nomeFantasia: form.nomeFantasia || undefined, category: form.category || undefined, notes: form.notes || undefined }); toast.success("Atualizado!"); router.push(`/dashboard/suppliers/${params.id}`); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } finally { setLoading(false); }
+    try { setLoading(true); await api.put(`/suppliers/${params.id}`, { type: form.type, cpfCnpj: form.cpfCnpj, razaoSocial: form.razaoSocial, nomeFantasia: form.nomeFantasia || undefined, category: form.category || undefined, notes: form.notes || undefined }); toast.success("Atualizado!"); router.push(`/dashboard/suppliers/${params.id}`); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } finally { setLoading(false); }
   }
 
   if (fetching) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;

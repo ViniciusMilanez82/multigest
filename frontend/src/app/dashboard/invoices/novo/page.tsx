@@ -39,8 +39,8 @@ export default function NewInvoicePage() {
   });
 
   useEffect(() => {
-    api.get("/api/customers", { params: { limit: 500 } }).then((r) => setCustomers(r.data.data)).catch(() => {});
-    api.get("/api/contracts", { params: { limit: 500, status: "ACTIVE" } }).then((r) => setContracts(r.data.data)).catch(() => {});
+    api.get("/customers", { params: { limit: 500 } }).then((r) => setCustomers(r.data.data)).catch(() => {});
+    api.get("/contracts", { params: { limit: 500, status: "ACTIVE" } }).then((r) => setContracts(r.data.data)).catch(() => {});
   }, []);
 
   function set(field: string, value: string) {
@@ -65,7 +65,7 @@ export default function NewInvoicePage() {
       if (form.contractId) payload.contractId = form.contractId;
       if (form.notes) payload.notes = form.notes;
 
-      const res = await api.post("/api/invoices", payload);
+      const res = await api.post("/invoices", payload);
       toast.success("Fatura criada com sucesso!");
       router.push(`/dashboard/invoices/${res.data.id}`);
     } catch (err: any) {

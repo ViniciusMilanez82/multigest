@@ -108,7 +108,7 @@ export class DashboardService {
       orderBy: { scheduledDeliveryDate: 'asc' },
     });
 
-    return items.map((it) => ({
+    const itemsResult = items.map((it) => ({
       id: it.id,
       contractId: it.contractId,
       contractNumber: it.contract.contractNumber,
@@ -120,5 +120,21 @@ export class DashboardService {
       isBlocked: !!it.deliveryBlockedReason,
       contractSignedAt: it.contract.contractSignedAt,
     }));
+
+    const serviceOrders = await this.prisma.serviceOrder.findMany({
+      where: {
+        companyId,
+        scheduledDate: { gte: start, lte: end },
+        status: { not: 'CANCELLED' },
+      },
+      include: {
+        contract: {
+          include: { customer: { select: { razaoSocial: true, nomeFantasia: true } } },
+        },
+      },
+      orderBy: { scheduledDate: 'asc' },
+    });
+
+    return { items: itemsResult, serviceOrders };
   }
 }

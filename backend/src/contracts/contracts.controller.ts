@@ -35,6 +35,14 @@ export class ContractsController {
     return this.contractsService.reajusteIgpm(companyId, dto);
   }
 
+  @Get('reajuste-igpm/preview')
+  @ApiOperation({ summary: 'Preview do reajuste IGPM (simulação)' })
+  reajusteIgpmPreview(@Headers('x-company-id') companyId: string, @Query() query: { percentual: string; contractIds?: string }) {
+    const percentual = parseFloat(query.percentual || '0');
+    const contractIds = query.contractIds ? query.contractIds.split(',').filter(Boolean) : undefined;
+    return this.contractsService.reajusteIgpmPreview(companyId, { percentual, contractIds });
+  }
+
   @Get()
   @ApiOperation({ summary: 'Listar contratos' })
   @ApiQuery({ name: 'search', required: false })
@@ -141,6 +149,11 @@ export class ContractsController {
   @Post(':id/supply-orders')
   createSupplyOrder(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Body() dto: CreateSupplyOrderDto) {
     return this.contractsService.createSupplyOrder(companyId, id, dto);
+  }
+
+  @Get(':id/supply-orders/next-number')
+  nextSupplyNumber(@Param('id') id: string) {
+    return this.contractsService.nextSupplyOrderNumber(id);
   }
 
   @Get(':id/supply-orders')

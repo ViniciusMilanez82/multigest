@@ -14,8 +14,8 @@ export default function SupplierDetailPage() {
   const [supplier, setSupplier] = useState<any>(null); const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchSupplier(); }, []);
-  async function fetchSupplier() { try { const r = await api.get(`/api/suppliers/${params.id}`); setSupplier(r.data); } catch { toast.error("Fornecedor não encontrado"); router.push("/dashboard/suppliers"); } finally { setLoading(false); } }
-  async function handleDelete() { try { await api.delete(`/api/suppliers/${params.id}`); toast.success("Fornecedor excluído"); router.push("/dashboard/suppliers"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
+  async function fetchSupplier() { try { const r = await api.get(`/suppliers/${params.id}`); setSupplier(r.data); } catch { toast.error("Fornecedor não encontrado"); router.push("/dashboard/suppliers"); } finally { setLoading(false); } }
+  async function handleDelete() { try { await api.delete(`/suppliers/${params.id}`); toast.success("Fornecedor excluído"); router.push("/dashboard/suppliers"); } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } }
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">Carregando...</div>;
   if (!supplier) return null;

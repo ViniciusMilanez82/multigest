@@ -33,7 +33,7 @@ export default function EditVehiclePage() {
 
   async function fetchVehicle() {
     try {
-      const res = await api.get(`/api/vehicles/${params.id}`);
+      const res = await api.get(`/vehicles/${params.id}`);
       const v = res.data;
       setForm({
         plate: v.plate || "",
@@ -74,7 +74,7 @@ export default function EditVehiclePage() {
       if (form.loadCapacityKg) payload.loadCapacityKg = parseFloat(form.loadCapacityKg);
       if (form.currentKm) payload.currentKm = parseInt(form.currentKm);
 
-      await api.put(`/api/vehicles/${params.id}`, payload);
+      await api.put(`/vehicles/${params.id}`, payload);
       toast.success("Veículo atualizado!");
       router.push(`/dashboard/fleet/${params.id}`);
     } catch (err: any) {

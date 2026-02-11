@@ -137,6 +137,7 @@ export class ContractsService {
       where: { id, companyId },
       include: {
         customer: true,
+        proposal: { select: { id: true, proposalNumber: true } },
         items: {
           include: { asset: { include: { assetType: true } } },
           orderBy: { createdAt: 'asc' },
@@ -416,6 +417,36 @@ export class ContractsService {
 
   // ─── REAJUSTE IGPM ───
 
+  async reajusteIgpmPreview(companyId: string, dto: { percentual: number; contractIds?: string[] }) {
+    const where: any = { companyId, deletedAt: null, status: 'ACTIVE' };
+    if (dto.contractIds?.length) where.id = { in: dto.contractIds };
+    const items = await this.prisma.contractItem.findMany({
+      where: { contract: where, isActive: true },
+      select: { id: true, dailyRate: true, monthlyRate: true },
+    });
+    const factor = 1 + dto.percentual / 100;
+    let totalAntes = 0;
+    let totalDepois = 0;
+    for (const it of items) {
+      const d = Number(it.dailyRate);
+      const m = it.monthlyRate ? Number(it.monthlyRate) : d * 30;
+      totalAntes += m;
+      totalDepois += m * factor;
+    }
+    const contracts = await this.prisma.contract.findMany({
+      where: { companyId, deletedAt: null, status: 'ACTIVE', ...(dto.contractIds?.length ? { id: { in: dto.contractIds } } : {}) },
+      select: { id: true },
+    });
+    return {
+      itemCount: items.length,
+      contractCount: contracts.length,
+      percentual: dto.percentual,
+      valorAtualMensal: totalAntes,
+      valorAposReajuste: totalDepois,
+      impactoMensal: totalDepois - totalAntes,
+    };
+  }
+
   async reajusteIgpm(companyId: string, dto: { percentual: number; contractIds?: string[] }) {
     const where: any = { companyId, deletedAt: null, status: 'ACTIVE' };
     if (dto.contractIds?.length) where.id = { in: dto.contractIds };
@@ -554,6 +585,16 @@ export class ContractsService {
       where: { contractId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async nextSupplyOrderNumber(contractId: string): Promise<string> {
+    const existing = await this.prisma.supplyOrder.findMany({
+      where: { contractId },
+      select: { supplyNumber: true },
+    });
+    const nums = existing.map((s) => parseInt(s.supplyNumber.replace(/\D/g, ''), 10) || 0);
+    const next = (Math.max(0, ...nums) + 1).toString().padStart(3, '0');
+    return `AF-${next}`;
   }
 
   private async nextContractNumber(companyId: string): Promise<string> {

@@ -16,7 +16,7 @@ export default function EditBiddingPage() {
   const [form, setForm] = useState({ number: "", modality: "", agency: "", object: "", openingDate: "", estimatedValue: "", notes: "", status: "ABERTA" });
   function set(f: string, v: string) { setForm(p => ({ ...p, [f]: v })); }
 
-  useEffect(() => { api.get(`/api/biddings/${params.id}`).then(r => { const b = r.data; setForm({ number: b.number || "", modality: b.modality || "", agency: b.agency || "", object: b.object || "", openingDate: b.openingDate ? b.openingDate.split("T")[0] : "", estimatedValue: b.estimatedValue ? String(b.estimatedValue) : "", notes: b.notes || "", status: b.status || "ABERTA" }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/biddings"); }).finally(() => setFetching(false)); }, []);
+  useEffect(() => { api.get(`/biddings/${params.id}`).then(r => { const b = r.data; setForm({ number: b.number || "", modality: b.modality || "", agency: b.agency || "", object: b.object || "", openingDate: b.openingDate ? b.openingDate.split("T")[0] : "", estimatedValue: b.estimatedValue ? String(b.estimatedValue) : "", notes: b.notes || "", status: b.status || "ABERTA" }); }).catch(() => { toast.error("Não encontrado"); router.push("/dashboard/biddings"); }).finally(() => setFetching(false)); }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function EditBiddingPage() {
       if (form.openingDate) payload.openingDate = new Date(form.openingDate).toISOString();
       if (form.estimatedValue) payload.estimatedValue = parseFloat(form.estimatedValue);
       if (form.notes) payload.notes = form.notes;
-      await api.put(`/api/biddings/${params.id}`, payload);
+      await api.put(`/biddings/${params.id}`, payload);
       toast.success("Atualizado!"); router.push(`/dashboard/biddings/${params.id}`);
     } catch (e: any) { toast.error(e.response?.data?.message || "Erro"); } finally { setLoading(false); }
   }

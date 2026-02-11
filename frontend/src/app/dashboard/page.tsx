@@ -48,7 +48,7 @@ export default function DashboardPage() {
 
   async function fetchDashboard() {
     try {
-      const res = await api.get("/api/dashboard/overview");
+      const res = await api.get("/dashboard/overview");
       setData(res.data);
     } catch (e) {
       console.error("Erro ao carregar dashboard:", e);

@@ -18,7 +18,7 @@ export default function DriversPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetch(); }, [search]);
-  async function fetch() { try { setLoading(true); const p: any = {}; if (search) p.search = search; const r = await api.get("/api/fleet/drivers", { params: p }); setDrivers(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar dados"); } finally { setLoading(false); } }
+  async function fetch() { try { setLoading(true); const p: any = {}; if (search) p.search = search; const r = await api.get("/fleet/drivers", { params: p }); setDrivers(Array.isArray(r.data) ? r.data : r.data.data || []); } catch { toast.error("Erro ao carregar dados"); } finally { setLoading(false); } }
 
   return (
     <div className="space-y-6">

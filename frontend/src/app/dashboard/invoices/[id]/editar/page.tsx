@@ -29,7 +29,7 @@ export default function EditInvoicePage() {
 
   async function fetchInvoice() {
     try {
-      const res = await api.get(`/api/invoices/${params.id}`);
+      const res = await api.get(`/invoices/${params.id}`);
       const inv = res.data;
       setForm({
         invoiceNumber: inv.invoiceNumber || "",
@@ -54,7 +54,7 @@ export default function EditInvoicePage() {
     e.preventDefault();
     try {
       setLoading(true);
-      await api.put(`/api/invoices/${params.id}`, {
+      await api.put(`/invoices/${params.id}`, {
         invoiceNumber: form.invoiceNumber,
         issueDate: form.issueDate,
         dueDate: form.dueDate,

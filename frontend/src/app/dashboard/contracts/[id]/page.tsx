@@ -12,12 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import Link from "next/link";
 import { ArrowLeft, Pencil, RefreshCw, Loader2, FileText, Users, Calendar, DollarSign, Package, Truck, ClipboardList, FilePlus2, Plus, PenSquare, Ban, FileCheck, Percent, UserPlus, FileDown } from "lucide-react";
 import { generateSupplyOrderPdf } from "@/lib/supply-order-pdf";
 import { toast } from "sonner";
 
 interface ContractItem { id: string; assetId: string; dailyRate: number | string; monthlyRate?: number | string; startDate: string; endDate?: string; departureDate?: string; isActive: boolean; notes?: string; scheduledDeliveryDate?: string | null; deliveryBlockedReason?: string | null; asset?: { id: string; code: string; status: string; assetType?: { name: string } }; }
-interface Contract { id: string; contractNumber: string; type: string; status: string; startDate: string; endDate?: string; paymentTerms?: string; paymentMethod?: string; totalMonthlyValue?: number | string; notes?: string; contractSignedAt?: string | null; createdAt?: string; updatedAt?: string; customer?: { id: string; razaoSocial: string; nomeFantasia?: string; cpfCnpj: string }; items?: ContractItem[]; movements?: { id: string; type: string; assetCode?: string; movementDate: string; address?: string; notes?: string }[]; }
+interface Contract { id: string; contractNumber: string; type: string; status: string; startDate: string; endDate?: string; paymentTerms?: string; paymentMethod?: string; totalMonthlyValue?: number | string; notes?: string; contractSignedAt?: string | null; createdAt?: string; updatedAt?: string; customer?: { id: string; razaoSocial: string; nomeFantasia?: string; cpfCnpj: string }; proposal?: { id: string; proposalNumber: string }; items?: ContractItem[]; movements?: { id: string; type: string; assetCode?: string; movementDate: string; address?: string; notes?: string }[]; measurements?: unknown[]; addendums?: unknown[]; }
 interface Measurement { id: string; referenceMonth: string; status: string; totalValue: number | string; notes?: string; items?: MeasurementItem[]; createdAt: string; }
 interface MeasurementItem { id: string; contractItemId: string; billedDays: number; excludedDays: number; excludedReason?: string; unitValue: number | string; totalValue: number | string; }
 interface Addendum { id: string; type: string; description: string; effectiveDate: string; newValue?: number | string; notes?: string; createdAt: string; }
@@ -91,6 +92,7 @@ export default function ContratoDetalhePage() {
   const [trocaDialogOpen, setTrocaDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<{ id: string; razaoSocial: string }[]>([]);
   const [reajustePercent, setReajustePercent] = useState("");
+  const [reajustePreview, setReajustePreview] = useState<{ itemCount: number; contractCount: number; valorAtualMensal: number; valorAposReajuste: number; impactoMensal: number } | null>(null);
   const [trocaCustomerId, setTrocaCustomerId] = useState("");
 
   const fetchContract = useCallback(async () => {
@@ -230,11 +232,16 @@ export default function ContratoDetalhePage() {
   async function handleMarkSigned() {
     try { await api.patch(`/contracts/${id}/sign`); toast.success("Contrato marcado como assinado!"); setSignDialogOpen(false); fetchContract(); } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); }
   }
+  async function handleReajustePreview() {
+    const pct = parseFloat(reajustePercent);
+    if (isNaN(pct) || pct <= 0) { toast.error("Informe um percentual válido"); return; }
+    try { const { data } = await api.get(`/contracts/reajuste-igpm/preview?percentual=${pct}&contractIds=${id}`); setReajustePreview(data); } catch { toast.error("Erro ao simular"); }
+  }
   async function handleReajusteIgpm(e: React.FormEvent) {
     e.preventDefault();
     const pct = parseFloat(reajustePercent);
     if (isNaN(pct) || pct <= 0) { toast.error("Informe um percentual válido"); return; }
-    try { await api.post("/contracts/reajuste-igpm", { percentual: pct, contractIds: [id] }); toast.success("Reajuste aplicado!"); setReajusteDialogOpen(false); setReajustePercent(""); fetchContract(); } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); }
+    try { await api.post("/contracts/reajuste-igpm", { percentual: pct, contractIds: [id] }); toast.success("Reajuste aplicado!"); setReajusteDialogOpen(false); setReajustePercent(""); setReajustePreview(null); fetchContract(); } catch (err: any) { toast.error(err.response?.data?.message || "Erro"); }
   }
   async function handleTrocaTitularidade(e: React.FormEvent) {
     e.preventDefault();
@@ -255,6 +262,14 @@ export default function ContratoDetalhePage() {
           <div>
             <div className="flex items-center gap-3"><h2 className="text-2xl font-bold text-gray-900">{contract.contractNumber}</h2><Badge variant="secondary" className={STATUS_COLORS[contract.status] || ""}>{STATUS_LABELS[contract.status] || contract.status}</Badge></div>
             <p className="text-gray-500 mt-1">{contract.customer?.razaoSocial}</p>
+            {contract.proposal && (
+              <p className="text-sm mt-1">
+                <Link href={`/dashboard/proposals/${contract.proposal.id}`} className="text-blue-600 hover:underline flex items-center gap-1">
+                  <FileCheck className="w-4 h-4" />
+                  Originado da proposta {contract.proposal.proposalNumber}
+                </Link>
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -266,10 +281,14 @@ export default function ContratoDetalhePage() {
               </DialogContent>
             </Dialog>
           )}
-          <Dialog open={reajusteDialogOpen} onOpenChange={setReajusteDialogOpen}>
+          <Dialog open={reajusteDialogOpen} onOpenChange={(o) => { setReajusteDialogOpen(o); if (!o) setReajustePreview(null); }}>
             <DialogTrigger asChild><Button variant="outline" size="sm"><Percent className="w-4 h-4 mr-1" /> Reajuste IGPM</Button></DialogTrigger>
-            <DialogContent><DialogHeader><DialogTitle>Reajuste IGPM</DialogTitle><DialogDescription>Informe o percentual para reajustar os itens deste contrato.</DialogDescription></DialogHeader>
-              <form onSubmit={handleReajusteIgpm} className="space-y-4 py-2"><div><Label>Percentual (%)</Label><Input type="number" step="0.01" value={reajustePercent} onChange={e => setReajustePercent(e.target.value)} placeholder="Ex: 5.5" /></div><DialogFooter><Button type="button" variant="outline" onClick={() => setReajusteDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={!reajustePercent}>Aplicar</Button></DialogFooter></form>
+            <DialogContent><DialogHeader><DialogTitle>Reajuste IGPM</DialogTitle><DialogDescription>Informe o percentual e simule antes de aplicar.</DialogDescription></DialogHeader>
+              <form onSubmit={handleReajusteIgpm} className="space-y-4 py-2">
+                <div><Label>Percentual (%)</Label><Input type="number" step="0.01" value={reajustePercent} onChange={e => { setReajustePercent(e.target.value); setReajustePreview(null); }} placeholder="Ex: 5.5" /></div>
+                {reajustePreview && <div className="rounded-lg border p-3 bg-amber-50 text-sm"><p><strong>Simulação:</strong> {reajustePreview.itemCount} itens em {reajustePreview.contractCount} contrato(s)</p><p>Valor mensal atual: {formatCurrency(reajustePreview.valorAtualMensal)}</p><p>Após reajuste: {formatCurrency(reajustePreview.valorAposReajuste)}</p><p className="text-amber-800 font-medium">Impacto: +{formatCurrency(reajustePreview.impactoMensal)}/mês</p></div>}
+                <DialogFooter><Button type="button" variant="outline" onClick={() => setReajusteDialogOpen(false)}>Cancelar</Button>{!reajustePreview ? <Button type="button" onClick={handleReajustePreview} disabled={!reajustePercent}>Simular</Button> : <><Button type="button" variant="outline" onClick={() => setReajustePreview(null)}>Alterar</Button><Button type="submit">Confirmar e aplicar</Button></>}</DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
           <Dialog open={trocaDialogOpen} onOpenChange={(o) => { setTrocaDialogOpen(o); if (o) fetchCustomers(); }}>
@@ -312,16 +331,16 @@ export default function ContratoDetalhePage() {
       {/* Tabs */}
       <div className="flex gap-1 border-b overflow-x-auto">
         {[
-          { key: "items", label: "Itens", icon: Package },
-          { key: "movements", label: "Movimentações", icon: Truck },
-          { key: "measurements", label: "Medições", icon: ClipboardList },
-          { key: "addendums", label: "Aditivos", icon: FilePlus2 },
-          { key: "analyses", label: "Análise Crítica", icon: PenSquare },
-          { key: "supply-orders", label: "Documento AF", icon: FileText },
-          { key: "service-orders", label: "Ordens de Serviço", icon: ClipboardList },
+          { key: "items", label: "Itens", icon: Package, count: contract.items?.length ?? 0 },
+          { key: "movements", label: "Movimentações", icon: Truck, count: contract.movements?.length ?? 0 },
+          { key: "measurements", label: "Medições", icon: ClipboardList, count: measurements.length || (contract.measurements?.length ?? 0) },
+          { key: "addendums", label: "Aditivos", icon: FilePlus2, count: addendums.length || (contract.addendums?.length ?? 0) },
+          { key: "analyses", label: "Análise Crítica", icon: PenSquare, count: analyses.length },
+          { key: "supply-orders", label: "Documento AF", icon: FileText, count: supplyOrders.length },
+          { key: "service-orders", label: "Ordens de Serviço", icon: ClipboardList, count: serviceOrders.length },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 shrink-0 transition-colors ${tab === t.key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
-            <t.icon className="w-4 h-4" /> {t.label}
+            <t.icon className="w-4 h-4" /> {t.label} {t.count > 0 && <span className="text-xs bg-gray-200 px-1.5 rounded">{t.count}</span>}
           </button>
         ))}
       </div>
@@ -423,7 +442,7 @@ export default function ContratoDetalhePage() {
       {tab === "analyses" && (
         <Card><CardHeader className="flex flex-row items-center justify-between">
           <div><CardTitle className="text-lg flex items-center gap-2"><PenSquare className="w-5 h-5 text-blue-600" /> Análise Crítica</CardTitle><CardDescription>Dados consolidados para análise do contrato</CardDescription></div>
-          <Dialog open={anaDialogOpen} onOpenChange={setAnaDialogOpen}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nova</Button></DialogTrigger>
+          <Dialog open={anaDialogOpen} onOpenChange={(o) => { setAnaDialogOpen(o); if (o && contract) { const c = contract.customer; const models = contract.items?.filter(i => i.isActive).map(i => i.asset?.assetType?.name || i.asset?.code).filter(Boolean).join(", ") || ""; const total = contract.items?.filter(i => i.isActive).reduce((s, i) => s + (Number(i.monthlyRate) || 0), 0) || 0; setAnaForm({ proposalNumber: contract.contractNumber, customerName: c?.razaoSocial || c?.nomeFantasia || "", cnpj: c?.cpfCnpj || "", equipmentModels: models, monthlyValue: total ? String(total) : "" }); } }}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nova</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Nova Análise Crítica</DialogTitle></DialogHeader>
               <form onSubmit={handleCreateAnalysis} className="space-y-3">
                 {["proposalNumber","proposalDate","customerName","cnpj","addressCnpj","addressInstall","contactComercial","contactFinanceiro","contactRecebimento","responsible","witness","equipmentModels","monthlyValue","monthsRental","expectedExit"].map(f => (
@@ -452,7 +471,7 @@ export default function ContratoDetalhePage() {
       {tab === "supply-orders" && (
         <Card><CardHeader className="flex flex-row items-center justify-between">
           <div><CardTitle className="text-lg flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" /> Documento AF</CardTitle><CardDescription>Fichas de fornecimento</CardDescription></div>
-          <Dialog open={supDialogOpen} onOpenChange={setSupDialogOpen}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Novo</Button></DialogTrigger>
+          <Dialog open={supDialogOpen} onOpenChange={(o) => { setSupDialogOpen(o); if (o) { api.get(`/contracts/${id}/supply-orders/next-number`).then(r => setSupForm(p => ({ ...p, supplyNumber: r.data || "AF-001", customerName: contract.customer?.razaoSocial || contract.customer?.nomeFantasia || "" }))).catch(() => {}); } }}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Novo</Button></DialogTrigger>
             <DialogContent><DialogHeader><DialogTitle>Novo Documento AF</DialogTitle></DialogHeader>
               <form onSubmit={handleCreateSupplyOrder} className="space-y-4">
                 <div><Label>Número AF *</Label><Input value={supForm.supplyNumber} onChange={e => setSupForm(p => ({ ...p, supplyNumber: e.target.value }))} placeholder="AF-001" /></div>
@@ -485,6 +504,9 @@ export default function ContratoDetalhePage() {
           <div><CardTitle className="text-lg flex items-center gap-2"><ClipboardList className="w-5 h-5 text-blue-600" /> Ordens de Serviço</CardTitle><CardDescription>Instalação, retirada, remoção, troca ar, manutenção</CardDescription></div>
           <Dialog open={osDialogOpen} onOpenChange={setOsDialogOpen}><DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" /> Nova OS</Button></DialogTrigger>
             <DialogContent><DialogHeader><DialogTitle>Nova Ordem de Serviço</DialogTitle></DialogHeader>
+              {(osForm.type === "INSTALACAO" || osForm.type === "RETIRADA") && (contract?.items?.some(i => i.isActive && i.deliveryBlockedReason)) && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800"><strong>Atenção:</strong> Existem itens com entrega bloqueada (pagamento ou contrato não assinado). Verifique no contrato antes de prosseguir.</div>
+              )}
               <form onSubmit={handleCreateServiceOrder} className="space-y-4">
                 <div><Label>Tipo</Label><Select value={osForm.type} onValueChange={v => setOsForm(p => ({ ...p, type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="INSTALACAO">Instalação</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem><SelectItem value="REMOCAO">Remoção</SelectItem><SelectItem value="TROCA_AR">Troca Ar</SelectItem><SelectItem value="MANUTENCAO">Manutenção</SelectItem></SelectContent></Select></div>
                 <div><Label>Endereço</Label><Input value={osForm.address} onChange={e => setOsForm(p => ({ ...p, address: e.target.value }))} placeholder="Endereço do serviço" /></div>
