@@ -29,8 +29,21 @@ interface Customer {
   nomeFantasia?: string;
 }
 
+interface Subfamily {
+  id: string;
+  name: string;
+  assetType?: { id: string; name: string };
+}
+
+interface Family {
+  id: string;
+  name: string;
+  subfamilies: Subfamily[];
+}
+
 interface ProposalItem {
-  tipo: string;
+  subfamilyId?: string;
+  tipo?: string;
   modelo: string;
   quantidade: number;
   valorUnitario: number;
@@ -48,6 +61,7 @@ export default function NovaPropostaPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -60,7 +74,7 @@ export default function NovaPropostaPage() {
   });
 
   const [items, setItems] = useState<ProposalItem[]>([
-    { tipo: "maritimo", modelo: "", quantidade: 1, valorUnitario: 0 },
+    { subfamilyId: "", modelo: "", quantidade: 1, valorUnitario: 0 },
   ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -73,9 +87,19 @@ export default function NovaPropostaPage() {
     }
   }, []);
 
+  const fetchFamilies = useCallback(async () => {
+    try {
+      const { data } = await api.get("/item-families");
+      setFamilies(Array.isArray(data) ? data : []);
+    } catch {
+      setFamilies([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchCustomers();
-  }, [fetchCustomers]);
+    fetchFamilies();
+  }, [fetchCustomers, fetchFamilies]);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -99,7 +123,7 @@ export default function NovaPropostaPage() {
   function addItem() {
     setItems((prev) => [
       ...prev,
-      { tipo: "maritimo", modelo: "", quantidade: 1, valorUnitario: 0 },
+      { subfamilyId: "", modelo: "", quantidade: 1, valorUnitario: 0 },
     ]);
   }
 
@@ -130,10 +154,13 @@ export default function NovaPropostaPage() {
     }
     if (step === 2) {
       const valid = items.filter(
-        (i) => i.modelo?.trim() && i.quantidade > 0 && i.valorUnitario > 0
+        (i) =>
+          (i.subfamilyId || i.modelo?.trim()) &&
+          i.quantidade > 0 &&
+          i.valorUnitario > 0
       );
       if (valid.length === 0) {
-        newErrors.items = "Adicione ao menos um item válido";
+        newErrors.items = "Adicione ao menos um item válido (subfamília ou modelo)";
       }
     }
     setErrors(newErrors);
@@ -153,14 +180,28 @@ export default function NovaPropostaPage() {
       const payload: any = {
         type: form.type,
         items: items
-          .filter((i) => i.modelo?.trim() && i.quantidade > 0 && i.valorUnitario > 0)
-          .map((i) => ({
-            tipo: i.tipo,
-            modelo: i.modelo,
-            quantidade: i.quantidade,
-            valorUnitario: i.valorUnitario,
-            frete: i.frete || undefined,
-          })),
+          .filter(
+            (i) =>
+              (i.subfamilyId || i.modelo?.trim()) &&
+              i.quantidade > 0 &&
+              i.valorUnitario > 0
+          )
+          .map((i) => {
+            const sub = families
+              .flatMap((f) => f.subfamilies || [])
+              .find((s) => s.id === i.subfamilyId);
+            const descricao = sub
+              ? `${sub.name}${i.modelo?.trim() ? ` — ${i.modelo}` : ""}`
+              : i.modelo?.trim() || undefined;
+            return {
+              subfamilyId: i.subfamilyId || undefined,
+              modelo: i.modelo?.trim() || undefined,
+              descricao,
+              quantidade: i.quantidade,
+              valorUnitario: i.valorUnitario,
+              frete: i.frete || undefined,
+            };
+          }),
       };
       if (form.customerId) payload.customerId = form.customerId;
       else {
@@ -339,28 +380,35 @@ export default function NovaPropostaPage() {
                   key={i}
                   className="flex flex-wrap gap-3 p-4 rounded-lg border bg-gray-50"
                 >
-                  <div className="flex-1 min-w-[100px] space-y-2">
-                    <Label className="text-xs">Tipo</Label>
+                  <div className="flex-1 min-w-[200px] space-y-2">
+                    <Label className="text-xs">Família / Subfamília</Label>
                     <Select
-                      value={item.tipo}
-                      onValueChange={(v) => updateItem(i, "tipo", v)}
+                      value={item.subfamilyId || "__none__"}
+                      onValueChange={(v) =>
+                        updateItem(i, "subfamilyId", v === "__none__" ? "" : v)
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="maritimo">Marítimo</SelectItem>
-                        <SelectItem value="modulo">Módulo</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="__none__">— Selecionar —</SelectItem>
+                        {families.flatMap((f) =>
+                          (f.subfamilies || []).map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {f.name} → {s.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex-1 min-w-[150px] space-y-2">
-                    <Label className="text-xs">Modelo</Label>
+                    <Label className="text-xs">Modelo / Complemento</Label>
                     <Input
                       value={item.modelo}
                       onChange={(e) => updateItem(i, "modelo", e.target.value)}
-                      placeholder="Ex: Container 20 pés"
+                      placeholder="Ex: Detalhes ou variante"
                     />
                   </div>
                   <div className="w-24 space-y-2">
@@ -442,7 +490,7 @@ export default function NovaPropostaPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-muted/50">
-                      <th className="px-4 py-2 text-left">Modelo</th>
+                      <th className="px-4 py-2 text-left">Item</th>
                       <th className="px-4 py-2 text-left">Qtd</th>
                       <th className="px-4 py-2 text-right">Unit.</th>
                       <th className="px-4 py-2 text-right">Frete</th>
@@ -450,10 +498,21 @@ export default function NovaPropostaPage() {
                   </thead>
                   <tbody>
                     {items
-                      .filter((i) => i.modelo?.trim() && i.quantidade > 0)
-                      .map((i, idx) => (
+                      .filter(
+                        (i) =>
+                          (i.subfamilyId || i.modelo?.trim()) &&
+                          i.quantidade > 0
+                      )
+                      .map((i, idx) => {
+                        const sub = families
+                          .flatMap((f) => f.subfamilies || [])
+                          .find((s) => s.id === i.subfamilyId);
+                        const label = sub
+                          ? `${sub.name}${i.modelo?.trim() ? ` — ${i.modelo}` : ""}`
+                          : i.modelo || "—";
+                        return (
                         <tr key={idx} className="border-t">
-                          <td className="px-4 py-2">{i.modelo}</td>
+                          <td className="px-4 py-2">{label}</td>
                           <td className="px-4 py-2">{i.quantidade}</td>
                           <td className="px-4 py-2 text-right">
                             R$ {i.valorUnitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -462,7 +521,7 @@ export default function NovaPropostaPage() {
                             R$ {(i.frete ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
-                      ))}
+                      );})}
                   </tbody>
                 </table>
               </div>

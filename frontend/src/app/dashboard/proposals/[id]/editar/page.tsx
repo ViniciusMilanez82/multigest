@@ -28,8 +28,20 @@ interface Customer {
   nomeFantasia?: string;
 }
 
+interface Subfamily {
+  id: string;
+  name: string;
+}
+
+interface Family {
+  id: string;
+  name: string;
+  subfamilies: Subfamily[];
+}
+
 interface ProposalItem {
-  tipo: string;
+  subfamilyId?: string;
+  tipo?: string;
   modelo: string;
   quantidade: number;
   valorUnitario: number;
@@ -41,6 +53,7 @@ export default function EditarPropostaPage() {
   const params = useParams();
   const id = params.id as string;
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,12 +82,14 @@ export default function EditarPropostaPage() {
     async function load() {
       try {
         setLoading(true);
-        const [propRes, custRes] = await Promise.all([
+        const [propRes, custRes, famRes] = await Promise.all([
           api.get(`/proposals/${id}`),
           api.get("/customers", { params: { limit: 500 } }),
+          api.get("/item-families"),
         ]);
         const p = propRes.data;
         setCustomers(Array.isArray(custRes.data) ? custRes.data : custRes.data?.data || []);
+        setFamilies(Array.isArray(famRes.data) ? famRes.data : []);
 
         setForm({
           type: p.type || "LOCACAO",
@@ -87,13 +102,13 @@ export default function EditarPropostaPage() {
         setItems(
           Array.isArray(p.items) && p.items.length > 0
             ? p.items.map((i: any) => ({
-                tipo: i.tipo || "maritimo",
+                subfamilyId: i.subfamilyId || "",
                 modelo: i.modelo || "",
                 quantidade: i.quantidade ?? 1,
                 valorUnitario: i.valorUnitario ?? 0,
                 frete: i.frete,
               }))
-            : [{ tipo: "maritimo", modelo: "", quantidade: 1, valorUnitario: 0 }]
+            : [{ subfamilyId: "", modelo: "", quantidade: 1, valorUnitario: 0 }]
         );
       } catch {
         toast.error("Proposta não encontrada");
@@ -119,7 +134,7 @@ export default function EditarPropostaPage() {
   function addItem() {
     setItems((prev) => [
       ...prev,
-      { tipo: "maritimo", modelo: "", quantidade: 1, valorUnitario: 0 },
+      { subfamilyId: "", modelo: "", quantidade: 1, valorUnitario: 0 },
     ]);
   }
 
@@ -131,7 +146,10 @@ export default function EditarPropostaPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const valid = items.filter(
-      (i) => i.modelo?.trim() && i.quantidade > 0 && i.valorUnitario > 0
+      (i) =>
+        (i.subfamilyId || i.modelo?.trim()) &&
+        i.quantidade > 0 &&
+        i.valorUnitario > 0
     );
     if (valid.length === 0) {
       setErrors({ items: "Adicione ao menos um item válido" });
@@ -142,13 +160,22 @@ export default function EditarPropostaPage() {
     try {
       const payload: any = {
         type: form.type,
-        items: valid.map((i) => ({
-          tipo: i.tipo,
-          modelo: i.modelo,
-          quantidade: i.quantidade,
-          valorUnitario: i.valorUnitario,
-          frete: i.frete || undefined,
-        })),
+        items: valid.map((i) => {
+          const sub = families
+            .flatMap((f) => f.subfamilies || [])
+            .find((s) => s.id === i.subfamilyId);
+          const descricao = sub
+            ? `${sub.name}${i.modelo?.trim() ? ` — ${i.modelo}` : ""}`
+            : i.modelo?.trim() || undefined;
+          return {
+            subfamilyId: i.subfamilyId || undefined,
+            modelo: i.modelo?.trim() || undefined,
+            descricao,
+            quantidade: i.quantidade,
+            valorUnitario: i.valorUnitario,
+            frete: i.frete || undefined,
+          };
+        }),
       };
       if (form.customerId) payload.customerId = form.customerId;
       else {
@@ -289,24 +316,31 @@ export default function EditarPropostaPage() {
                   key={i}
                   className="flex flex-wrap gap-3 p-4 rounded-lg border bg-gray-50"
                 >
-                  <div className="flex-1 min-w-[80px] space-y-2">
-                    <Label className="text-xs">Tipo</Label>
+                  <div className="flex-1 min-w-[200px] space-y-2">
+                    <Label className="text-xs">Família / Subfamília</Label>
                     <Select
-                      value={item.tipo}
-                      onValueChange={(v) => updateItem(i, "tipo", v)}
+                      value={item.subfamilyId || "__none__"}
+                      onValueChange={(v) =>
+                        updateItem(i, "subfamilyId", v === "__none__" ? "" : v)
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="maritimo">Marítimo</SelectItem>
-                        <SelectItem value="modulo">Módulo</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="__none__">— Selecionar —</SelectItem>
+                        {families.flatMap((f) =>
+                          (f.subfamilies || []).map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {f.name} → {s.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex-1 min-w-[120px] space-y-2">
-                    <Label className="text-xs">Modelo</Label>
+                    <Label className="text-xs">Modelo / Complemento</Label>
                     <Input
                       value={item.modelo}
                       onChange={(e) => updateItem(i, "modelo", e.target.value)}

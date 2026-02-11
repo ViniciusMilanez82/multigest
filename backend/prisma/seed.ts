@@ -111,6 +111,67 @@ async function main() {
     });
   }
 
+  // Famílias e subfamílias de itens (para propostas)
+  const container20 = assetTypes.find((t) => t.name === "Container 20'");
+  const container40 = assetTypes.find((t) => t.name === "Container 40'");
+  const moduloHab = assetTypes.find((t) => t.name === 'Módulo Habitacional');
+
+  for (const company of [multiMacae, multiRio, petroteiner]) {
+    const familiaMaritimo = await prisma.itemFamily.upsert({
+      where: { companyId_name: { companyId: company.id, name: 'Marítimo' } },
+      update: {},
+      create: { companyId: company.id, name: 'Marítimo', sortOrder: 1 },
+    });
+    await prisma.itemSubfamily.upsert({
+      where: {
+        familyId_name: { familyId: familiaMaritimo.id, name: "Container 20'" },
+      },
+      update: {},
+      create: {
+        familyId: familiaMaritimo.id,
+        name: "Container 20'",
+        assetTypeId: container20?.id,
+        sortOrder: 1,
+      },
+    });
+    await prisma.itemSubfamily.upsert({
+      where: {
+        familyId_name: { familyId: familiaMaritimo.id, name: "Container 40'" },
+      },
+      update: {},
+      create: {
+        familyId: familiaMaritimo.id,
+        name: "Container 40'",
+        assetTypeId: container40?.id,
+        sortOrder: 2,
+      },
+    });
+
+    const familiaModulo = await prisma.itemFamily.upsert({
+      where: { companyId_name: { companyId: company.id, name: 'Módulo' } },
+      update: {},
+      create: { companyId: company.id, name: 'Módulo', sortOrder: 2 },
+    });
+    await prisma.itemSubfamily.upsert({
+      where: {
+        familyId_name: { familyId: familiaModulo.id, name: 'Módulo Habitacional' },
+      },
+      update: {},
+      create: {
+        familyId: familiaModulo.id,
+        name: 'Módulo Habitacional',
+        assetTypeId: moduloHab?.id,
+        sortOrder: 1,
+      },
+    });
+
+    await prisma.itemFamily.upsert({
+      where: { companyId_name: { companyId: company.id, name: 'Acessórios' } },
+      update: {},
+      create: { companyId: company.id, name: 'Acessórios', sortOrder: 3 },
+    });
+  }
+
   console.log('Seed concluído!');
   console.log('---');
   console.log('Login admin: admin@multigest.com.br / admin123');

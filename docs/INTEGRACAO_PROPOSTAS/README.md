@@ -19,6 +19,7 @@
 | G | [G_PLANO_TESTES.md](G_PLANO_TESTES.md) | Testes funcional, erro, permissões, E2E, Go/No-Go |
 | H | [H_RUNBOOK_OPERACAO.md](H_RUNBOOK_OPERACAO.md) | Deploy, rollback, logs, backups |
 | I | [I_VEREDITO_FINAL.md](I_VEREDITO_FINAL.md) | Revisão multiagente, STATUS: APROVADO |
+| J | [J_PLANO_MULTIAGENTE.md](J_PLANO_MULTIAGENTE.md) | Plano de integração por agente MULTISOFT |
 
 ---
 

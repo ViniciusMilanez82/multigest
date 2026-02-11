@@ -65,7 +65,10 @@ const navGroups = [
   },
   {
     title: "Administração",
-    items: [{ name: "Empresas", href: "/dashboard/companies", icon: Building2 }],
+    items: [
+      { name: "Empresas", href: "/dashboard/companies", icon: Building2 },
+      { name: "Famílias de Itens", href: "/dashboard/item-families", icon: Package },
+    ],
   },
 ];
 

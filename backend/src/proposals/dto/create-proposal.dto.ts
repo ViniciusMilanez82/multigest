@@ -3,15 +3,25 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class ProposalItemDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'ID da subfamília (do cadastro)' })
+  @IsOptional()
+  @IsString()
+  subfamilyId?: string;
+
+  @ApiPropertyOptional({ description: 'Legado: tipo texto (maritimo, modulo, etc)' })
   @IsOptional()
   @IsString()
   tipo?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Modelo ou complemento' })
   @IsOptional()
   @IsString()
   modelo?: string;
+
+  @ApiPropertyOptional({ description: 'Descrição para exibição (família/subfamília + modelo)' })
+  @IsOptional()
+  @IsString()
+  descricao?: string;
 
   @ApiProperty()
   @IsNumber()

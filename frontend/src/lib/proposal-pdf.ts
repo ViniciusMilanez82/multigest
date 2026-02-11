@@ -10,6 +10,7 @@ interface ProposalForPdf {
   phone?: string;
   email?: string;
   items: Array<{
+    descricao?: string;
     tipo?: string;
     modelo?: string;
     quantidade: number;
@@ -83,7 +84,7 @@ export function generateProposalPdf(proposal: ProposalForPdf, companyName?: stri
   for (const item of proposal.items) {
     const subtotal =
       item.quantidade * item.valorUnitario + (item.frete ?? 0);
-    doc.text(item.modelo || "—", margin, y);
+    doc.text(item.descricao || item.modelo || "—", margin, y);
     doc.text(String(item.quantidade), 100, y);
     doc.text(
       `R$ ${Number(item.valorUnitario).toFixed(2)}`,

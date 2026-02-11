@@ -17,6 +17,7 @@ import { SuppliersModule } from './suppliers/suppliers.module';
 import { BiddingsModule } from './biddings/biddings.module';
 import { ProposalsModule } from './proposals/proposals.module';
 import { ServiceOrdersModule } from './service-orders/service-orders.module';
+import { ItemFamiliesModule } from './item-families/item-families.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ServiceOrdersModule } from './service-orders/service-orders.module';
     BiddingsModule,
     ProposalsModule,
     ServiceOrdersModule,
+    ItemFamiliesModule,
   ],
   providers: [
     {

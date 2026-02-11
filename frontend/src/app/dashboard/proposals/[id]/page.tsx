@@ -428,8 +428,7 @@ export default function PropostaDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                  <th className="px-4 py-3 text-left font-medium">Modelo</th>
+                  <th className="px-4 py-3 text-left font-medium">Item</th>
                   <th className="px-4 py-3 text-right font-medium">Qtd</th>
                   <th className="px-4 py-3 text-right font-medium">Valor Unit.</th>
                   <th className="px-4 py-3 text-right font-medium">Frete</th>
@@ -440,10 +439,10 @@ export default function PropostaDetailPage() {
                 {items.map((item: any, i: number) => {
                   const subtotal =
                     item.quantidade * item.valorUnitario + (item.frete ?? 0);
+                  const label = item.descricao || item.modelo || item.tipo || "—";
                   return (
                     <tr key={i} className="border-b">
-                      <td className="px-4 py-3">{item.tipo || "—"}</td>
-                      <td className="px-4 py-3">{item.modelo || "—"}</td>
+                      <td className="px-4 py-3">{label}</td>
                       <td className="px-4 py-3 text-right">{item.quantidade}</td>
                       <td className="px-4 py-3 text-right">
                         R$ {Number(item.valorUnitario).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
