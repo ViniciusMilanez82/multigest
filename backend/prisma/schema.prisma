@@ -47,6 +47,7 @@ model Company {
   biddings       Bidding[]
   auditLogs      AuditLog[]
   stockLocations StockLocation[]
+  proposals      Proposal[]
 
   @@map("companies")
 }
@@ -140,6 +141,7 @@ model Customer {
   invoices         Invoice[]
   defaulterRecords DefaulterRecord[]
   stockLocations   StockLocation[]   // Cliente é também um local de estoque
+  proposals        Proposal[]
 
   @@unique([companyId, cpfCnpj])
   @@index([companyId])
@@ -875,4 +877,49 @@ enum BiddingStatus {
   WON
   LOST
   CANCELLED
+}
+
+// ============================================================
+// PROPOSTAS
+// ============================================================
+
+model Proposal {
+  id             String        @id @default(uuid())
+  companyId      String        @map("company_id")
+  customerId     String?       @map("customer_id")
+  proposalNumber String        @map("proposal_number")
+  type           ProposalType  @default(LOCACAO)
+  status         ProposalStatus @default(RASCUNHO)
+  items          Json          @default("[]")
+  valorTotal     Decimal       @db.Decimal(14, 2) @map("valor_total")
+  companyName    String?       @map("company_name")
+  contactName    String?       @map("contact_name")
+  phone          String?
+  email          String?
+  contractId     String?       @map("contract_id")
+  invoiceId      String?       @map("invoice_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  company  Company   @relation(fields: [companyId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@unique([companyId, proposalNumber])
+  @@index([companyId])
+  @@index([status])
+  @@map("proposals")
+}
+
+enum ProposalType {
+  VENDA
+  LOCACAO
+  EVENTO
+}
+
+enum ProposalStatus {
+  RASCUNHO
+  ENVIADA
+  ACEITA
+  RECUSADA
+  CONVERTIDA
 }

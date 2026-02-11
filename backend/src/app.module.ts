@@ -15,6 +15,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { StockLocationsModule } from './stock-locations/stock-locations.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { BiddingsModule } from './biddings/biddings.module';
+import { ProposalsModule } from './proposals/proposals.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { BiddingsModule } from './biddings/biddings.module';
     StockLocationsModule,
     SuppliersModule,
     BiddingsModule,
+    ProposalsModule,
   ],
   providers: [
     {

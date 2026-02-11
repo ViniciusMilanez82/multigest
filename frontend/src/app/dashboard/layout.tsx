@@ -19,6 +19,7 @@ import {
   Container,
   LayoutDashboard,
   FileText,
+  FileCheck,
   Package,
   Truck,
   DollarSign,
@@ -44,6 +45,7 @@ const navGroups = [
     title: "Operacional",
     items: [
       { name: "Contratos", href: "/dashboard/contracts", icon: FileText },
+      { name: "Propostas", href: "/dashboard/proposals", icon: FileCheck },
       { name: "Ativos", href: "/dashboard/ativos", icon: Package },
       { name: "Estoque", href: "/dashboard/stock-locations", icon: MapPin },
       { name: "Frota", href: "/dashboard/fleet", icon: Truck },

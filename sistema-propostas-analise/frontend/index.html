@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Propostas - Nova Versão</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <header class="text-center mb-5">
+            <h1 class="display-4">Sistema de Propostas</h1>
+            <p class="lead">Crie e gerencie suas propostas comerciais de forma simples e eficiente</p>
+        </header>
+
+        <!-- Wizard Navigation -->
+        <div class="wizard-navigation mb-4">
+            <ul class="nav nav-pills nav-justified wizard-steps">
+                <li class="nav-item">
+                    <a class="nav-link active" id="step1-tab" data-bs-toggle="pill" href="#step1">
+                        <div class="wizard-step-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="wizard-step-text">Tipo de Proposta</div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="step2-tab" data-bs-toggle="pill" href="#step2">
+                        <div class="wizard-step-icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="wizard-step-text">Dados do Cliente</div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="step3-tab" data-bs-toggle="pill" href="#step3">
+                        <div class="wizard-step-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="wizard-step-text">Itens da Proposta</div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="step4-tab" data-bs-toggle="pill" href="#step4">
+                        <div class="wizard-step-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="wizard-step-text">Revisão e Finalização</div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="tab-content wizard-content">
+            <!-- Step 1: Tipo de Proposta -->
+            <div class="tab-pane fade show active" id="step1">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Tipo de Proposta</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="date" class="form-label">Data</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        <input type="text" class="form-control" id="date" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="proposalNumber" class="form-label">Número da Proposta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                        <input type="text" class="form-control" id="proposalNumber" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="proposalType" class="form-label">Tipo de Proposta</label>
+                                    <select class="form-select" id="proposalType" required>
+                                        <option value="" selected disabled>Selecione o tipo de proposta</option>
+                                        <option value="venda">Venda</option>
+                                        <option value="locacao">Locação</option>
+                                        <option value="evento">Evento</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Por favor, selecione um tipo de proposta.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-arrow-left me-2"></i>Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary next-step" data-next="step2">
+                            Próximo<i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Dados do Cliente -->
+            <div class="tab-pane fade" id="step2">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Dados do Cliente</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="company" class="form-label">Empresa <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" class="form-control" id="company" placeholder="Nome da empresa" required>
+                                        <div class="invalid-feedback">
+                                            Por favor, informe o nome da empresa.
+                                        </div>
+                                    </div>
+                                    <div class="client-suggestions mt-1 d-none">
+                                        <div class="list-group">
+                                            <!-- Sugestões de autocompletar aparecerão aqui -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="phone" class="form-label">Telefone Celular <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fab fa-whatsapp"></i></span>
+                                        <input type="text" class="form-control" id="phone" placeholder="(00) 00000-0000" required>
+                                        <div class="invalid-feedback">
+                                            Por favor, informe um telefone válido.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" placeholder="email@exemplo.com" required>
+                                        <div class="invalid-feedback">
+                                            Por favor, informe um e-mail válido.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="contact" class="form-label">Contato <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="contact" placeholder="Nome do contato" required>
+                                        <div class="invalid-feedback">
+                                            Por favor, informe o nome do contato.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step1">
+                            <i class="fas fa-arrow-left me-2"></i>Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary next-step" data-next="step3">
+                            Próximo<i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Itens da Proposta -->
+            <div class="tab-pane fade" id="step3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Itens da Proposta</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Adicionar Item</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-3">
+                                                <div class="form-group">
+                                                    <label for="itemType" class="form-label">Tipo de Item</label>
+                                                    <select class="form-select" id="itemType">
+                                                        <option value="" selected disabled>Selecione</option>
+                                                        <option value="maritimo">Marítimo</option>
+                                                        <option value="modulo">Módulo</option>
+                                                        <option value="acessorios">Acessórios</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="form-group">
+                                                    <label for="itemModel" class="form-label">Modelo</label>
+                                                    <select class="form-select" id="itemModel" disabled>
+                                                        <option value="" selected disabled>Selecione o tipo primeiro</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 mb-3">
+                                                <div class="form-group">
+                                                    <label for="quantity" class="form-label">Quantidade</label>
+                                                    <input type="number" class="form-control" id="quantity" min="1" value="1">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="form-group">
+                                                    <label for="unitPrice" class="form-label">Valor Unitário</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">R$</span>
+                                                        <input type="text" class="form-control" id="unitPrice" placeholder="0,00">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1 mb-3 d-flex align-items-end">
+                                                <button type="button" class="btn btn-success w-100" id="addItemBtn">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover" id="itemsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Tipo</th>
+                                                <th>Modelo</th>
+                                                <th>Qtd</th>
+                                                <th>Valor Unit.</th>
+                                                <th>Valor Total</th>
+                                                <th>Frete</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsBody">
+                                            <!-- Itens serão adicionados aqui dinamicamente -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold">Total da Proposta:</td>
+                                                <td colspan="3" class="fw-bold" id="proposalTotal">R$ 0,00</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-3" id="noItemsAlert">
+                                    <i class="fas fa-info-circle me-2"></i>Adicione pelo menos um item à proposta.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step2">
+                            <i class="fas fa-arrow-left me-2"></i>Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary next-step" data-next="step4">
+                            Próximo<i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Revisão e Finalização -->
+            <div class="tab-pane fade" id="step4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Revisão e Finalização</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Resumo da Proposta</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <p class="mb-1 fw-bold">Número da Proposta:</p>
+                                                <p id="summaryNumber">-</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="mb-1 fw-bold">Data:</p>
+                                                <p id="summaryDate">-</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p class="mb-1 fw-bold">Tipo:</p>
+                                                <p id="summaryType">-</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-12">
+                                                <h6 class="border-bottom pb-2">Dados do Cliente</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1 fw-bold">Empresa:</p>
+                                                <p id="summaryCompany">-</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1 fw-bold">Contato:</p>
+                                                <p id="summaryContact">-</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1 fw-bold">Telefone:</p>
+                                                <p id="summaryPhone">-</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1 fw-bold">E-mail:</p>
+                                                <p id="summaryEmail">-</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <h6 class="border-bottom pb-2">Itens da Proposta</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-striped">
+                                                        <thead class="table-dark">
+                                                            <tr>
+                                                                <th>Tipo</th>
+                                                                <th>Modelo</th>
+                                                                <th>Qtd</th>
+                                                                <th>Valor Unit.</th>
+                                                                <th>Frete</th>
+                                                                <th>Valor Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="summaryItems">
+                                                            <!-- Itens serão adicionados aqui dinamicamente -->
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan="5" class="text-end fw-bold">Total da Proposta:</td>
+                                                                <td class="fw-bold" id="summaryTotal">R$ 0,00</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="d-flex justify-content-center gap-3">
+                                    <button type="button" class="btn btn-primary" id="previewBtn">
+                                        <i class="fas fa-eye me-2"></i>Visualizar Proposta
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="saveProposalBtn">
+                                        <i class="fas fa-save me-2"></i>Salvar Proposta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step3">
+                            <i class="fas fa-arrow-left me-2"></i>Anterior
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="createPdfBtn">
+                                <i class="fas fa-file-pdf me-2"></i>Criar PDF
+                            </button>
+                            <button type="button" class="btn btn-outline-success" id="whatsappBtn">
+                                <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" id="emailBtn">
+                                <i class="fas fa-envelope me-2"></i>E-mail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal de Frete -->
+    <div class="modal fade" id="freightModal" tabindex="-1" aria-labelledby="freightModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="freightModalLabel">Adicionar Frete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="freightValue" class="form-label">Valor do Frete</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control" id="freightValue" placeholder="0,00">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="addFreightBtn">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Remoção -->
+    <div class="modal fade" id="removeItemModal" tabindex="-1" aria-labelledby="removeItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeItemModalLabel">Remover Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Deseja realmente remover este item?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmRemoveBtn">Remover</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização Prévia -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="previewModalLabel">Visualização da Proposta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body" id="previewContent">
+                    <!-- Conteúdo da visualização prévia será inserido aqui -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="printPreviewBtn">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-bell me-2"></i>
+                <strong class="me-auto" id="toastTitle">Notificação</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Mensagem de notificação será inserida aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery and jQuery Mask -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    
+    <!-- jsPDF and AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>

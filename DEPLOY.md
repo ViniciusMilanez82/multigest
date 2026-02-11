@@ -45,7 +45,10 @@ FRONTEND_URL=http://srv1353769.hstgr.cloud:3000
 EOF
 ```
 
-## Passo 5: Rodar as migrations no banco
+## Passo 5: Rodar as migrations no banco (opcional)
+
+As migrations rodam automaticamente na subida do container backend (`prisma migrate deploy`).
+Para rodar manualmente antes do Docker:
 
 ```bash
 cd backend
@@ -102,6 +105,8 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 **Via pacote:** rodar `criar-deploy.ps1`, enviar o tar.gz, extrair em cima da pasta existente e `bash deploy.sh`.
+
+> **Nota:** Ao atualizar, a migration `add_proposals` (tabela de propostas) será aplicada automaticamente na subida do backend.
 
 ---
 
