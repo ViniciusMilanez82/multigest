@@ -251,11 +251,12 @@ export default function NovaPropostaPage() {
               <div className="space-y-2">
                 <Label>Cliente cadastrado</Label>
                 <Select
-                  value={form.customerId}
+                  value={form.customerId || "__none__"}
                   onValueChange={(v) => {
-                    handleChange("customerId", v);
-                    if (v) {
-                      const c = customers.find((x) => x.id === v);
+                    const val = v === "__none__" ? "" : v;
+                    handleChange("customerId", val);
+                    if (val) {
+                      const c = customers.find((x) => x.id === val);
                       if (c) handleChange("companyName", c.razaoSocial);
                     }
                   }}
@@ -264,7 +265,7 @@ export default function NovaPropostaPage() {
                     <SelectValue placeholder="Selecione (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum — informar abaixo</SelectItem>
+                    <SelectItem value="__none__">Nenhum — informar abaixo</SelectItem>
                     {customers.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.razaoSocial}

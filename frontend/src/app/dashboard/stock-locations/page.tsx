@@ -46,7 +46,10 @@ export default function StockLocationsPage() {
 
   useEffect(() => { fetchLocations(); }, [search]);
   useEffect(() => {
-    api.get("/customers", { params: { limit: 500 } }).then(r => setCustomers(r.data.data)).catch(() => {});
+    api.get("/customers", { params: { limit: 500 } }).then(r => {
+      const data = r.data;
+      setCustomers(Array.isArray(data) ? data : data?.data || []);
+    }).catch(() => setCustomers([]));
   }, []);
 
   async function fetchLocations() {
@@ -55,7 +58,7 @@ export default function StockLocationsPage() {
       const params: any = {};
       if (search) params.search = search;
       const res = await api.get("/stock-locations", { params });
-      setLocations(res.data);
+      setLocations(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch { toast.error("Erro ao carregar locais"); } finally { setLoading(false); }
   }
 
@@ -111,11 +114,11 @@ export default function StockLocationsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Vincular a Cliente (opcional)</label>
-                <Select value={form.customerId} onValueChange={v => setForm(f => ({ ...f, customerId: v }))}>
+                <Select value={form.customerId || "none"} onValueChange={v => setForm(f => ({ ...f, customerId: v === "none" ? "" : v }))}>
                   <SelectTrigger><SelectValue placeholder="Selecione (se for um local do cliente)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum — local próprio</SelectItem>
-                    {customers.map(c => (
+                    {(customers || []).map(c => (
                       <SelectItem key={c.id} value={c.id}>{c.nomeFantasia || c.razaoSocial} - {c.cpfCnpj}</SelectItem>
                     ))}
                   </SelectContent>
