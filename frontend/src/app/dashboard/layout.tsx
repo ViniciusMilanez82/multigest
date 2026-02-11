@@ -33,7 +33,7 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Contratos", href: "/dashboard/contracts", icon: FileText },
-  { name: "Ativos", href: "/dashboard/assets", icon: Package },
+  { name: "Ativos", href: "/dashboard/ativos", icon: Package },
   { name: "Frota", href: "/dashboard/fleet", icon: Truck },
   { name: "Cobrança", href: "/dashboard/collections", icon: DollarSign },
   { name: "Clientes", href: "/dashboard/customers", icon: Users },
