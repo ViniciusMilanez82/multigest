@@ -1,0 +1,22 @@
+# ============================================
+# MultiGest — Docker Compose (Desenvolvimento Local)
+# ============================================
+# Para dev local com PostgreSQL em container
+# Uso: docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: multigest-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: multigest
+      POSTGRES_PASSWORD: multigest_dev_2026
+      POSTGRES_DB: multigest
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
