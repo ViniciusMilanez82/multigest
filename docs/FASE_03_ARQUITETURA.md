@@ -113,6 +113,12 @@ Proposta de arquitetura para o sistema unificado **MultiGest** (nome sugerido �
 | M6 | **Cobrança** | SisReC | Títulos, inadimplência, acordos, régua de cobrança, licitações |
 | M7 | **Dashboard** | Novo | Visão gerencial consolidada de todos os módulos |
 | M8 | **Relatórios** | Novo | Relatórios operacionais e gerenciais |
+| — | **Propostas** | Novo | Wizard, PDF, conversão em contrato ou fatura |
+| — | **Expedição** | Novo | Painel de entregas programadas, bloqueios, botão Agendar |
+| — | **Estoque** | Novo | Locais de armazenamento (StockLocation), histórico de movimentação |
+| — | **Análise Crítica** | Novo | Formulário associado ao contrato (prefill automático) |
+| — | **Documento AF** | Novo | SupplyOrder — ordem de fornecimento |
+| — | **Ordem de Serviço (OS)** | Novo | ServiceOrder — instalação, retirada, remoção, troca de ar |
 
 ### 4.3 Estrutura de Pastas do Projeto
 

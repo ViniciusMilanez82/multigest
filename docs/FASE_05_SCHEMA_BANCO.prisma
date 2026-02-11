@@ -1,7 +1,10 @@
 // ============================================================
-// MultiGest — Schema do Banco de Dados (Prisma)
+// MultiGest — Schema do Banco de Dados (Documentação)
 // Sistema de Gestão Integrada para Aluguel de Containers
 // e Módulos Habitacionais
+//
+// Fonte: backend/prisma/schema.prisma
+// Última atualização: 2026-02
 // ============================================================
 
 generator client {
@@ -10,62 +13,60 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================================
-// M1 — CORE (Autenticação, Empresas, Usuários)
+// M1 — CORE
 // ============================================================
 
 model Company {
-  id               String   @id @default(uuid())
-  cnpj             String   @unique
-  razaoSocial      String   @map("razao_social")
-  nomeFantasia     String?  @map("nome_fantasia")
-  inscricaoEstadual String? @map("inscricao_estadual")
-  inscricaoMunicipal String? @map("inscricao_municipal")
-  phone            String?
-  email            String?
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid())
+  cnpj               String   @unique
+  razaoSocial        String   @map("razao_social")
+  nomeFantasia       String?  @map("nome_fantasia")
+  inscricaoEstadual  String?  @map("inscricao_estadual")
+  inscricaoMunicipal String?  @map("inscricao_municipal")
+  phone              String?
+  email              String?
+  street             String?
+  number             String?
+  complement         String?
+  neighborhood       String?
+  city               String?
+  state              String?
+  zipCode            String?  @map("zip_code")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  // Endereço
-  street           String?
-  number           String?
-  complement       String?
-  neighborhood     String?
-  city             String?
-  state            String?
-  zipCode          String?  @map("zip_code")
-
-  // Relacionamentos
-  users            UserCompany[]
-  customers        Customer[]
-  suppliers        Supplier[]
-  assets           Asset[]
-  vehicles         Vehicle[]
-  drivers          Driver[]
-  contracts        Contract[]
-  invoices         Invoice[]
-  biddings         Bidding[]
-  auditLogs        AuditLog[]
+  users          UserCompany[]
+  customers      Customer[]
+  suppliers      Supplier[]
+  assets         Asset[]
+  vehicles       Vehicle[]
+  drivers        Driver[]
+  contracts      Contract[]
+  invoices       Invoice[]
+  biddings       Bidding[]
+  auditLogs      AuditLog[]
+  stockLocations StockLocation[]
+  proposals      Proposal[]
+  serviceOrders  ServiceOrder[]
 
   @@map("companies")
 }
 
 model User {
-  id               String   @id @default(uuid())
-  name             String
-  email            String   @unique
-  passwordHash     String   @map("password_hash")
-  role             UserRole @default(OPERATOR)
-  isActive         Boolean  @default(true) @map("is_active")
-  lastLoginAt      DateTime? @map("last_login_at")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(OPERATOR)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  // Relacionamentos
   companies        UserCompany[]
   auditLogs        AuditLog[]
   collectionActions CollectionAction[]
@@ -75,12 +76,12 @@ model User {
 }
 
 model UserCompany {
-  id        String  @id @default(uuid())
-  userId    String  @map("user_id")
-  companyId String  @map("company_id")
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  companyId String @map("company_id")
 
-  user      User    @relation(fields: [userId], references: [id])
-  company   Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
   @@map("user_companies")
@@ -95,19 +96,19 @@ enum UserRole {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String?  @map("user_id")
-  companyId   String?  @map("company_id")
-  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-  entity      String   // Nome da entidade afetada
-  entityId    String?  @map("entity_id")
-  oldValues   Json?    @map("old_values")
-  newValues   Json?    @map("new_values")
-  ipAddress   String?  @map("ip_address")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  companyId String?  @map("company_id")
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  oldValues Json?    @map("old_values")
+  newValues Json?    @map("new_values")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user        User?    @relation(fields: [userId], references: [id])
-  company     Company? @relation(fields: [companyId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
 
   @@index([entity, entityId])
   @@index([userId])
@@ -116,34 +117,35 @@ model AuditLog {
 }
 
 // ============================================================
-// M2 — CADASTROS COMPARTILHADOS (Clientes, Fornecedores)
+// M2 — CADASTROS
 // ============================================================
 
 model Customer {
-  id                 String   @id @default(uuid())
-  companyId          String   @map("company_id")
-  code               String?  // Código interno legível
+  id                 String     @id @default(uuid())
+  companyId          String     @map("company_id")
+  code               String?
   type               PersonType @default(JURIDICA)
-  cpfCnpj            String   @map("cpf_cnpj")
-  razaoSocial        String   @map("razao_social")
-  nomeFantasia       String?  @map("nome_fantasia")
-  inscricaoEstadual  String?  @map("inscricao_estadual")
-  inscricaoMunicipal String?  @map("inscricao_municipal")
-  segment            String?  // Segmento do cliente (petróleo, construção, etc.)
+  cpfCnpj            String     @map("cpf_cnpj")
+  razaoSocial        String     @map("razao_social")
+  nomeFantasia       String?    @map("nome_fantasia")
+  inscricaoEstadual  String?    @map("inscricao_estadual")
+  inscricaoMunicipal String?    @map("inscricao_municipal")
+  segment            String?
   notes              String?
-  isDefaulter        Boolean  @default(false) @map("is_defaulter") // Inadimplente
-  isActive           Boolean  @default(true) @map("is_active")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-  deletedAt          DateTime? @map("deleted_at") // Soft delete
+  isDefaulter        Boolean    @default(false) @map("is_defaulter")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  deletedAt          DateTime?  @map("deleted_at")
 
-  // Relacionamentos
-  company            Company  @relation(fields: [companyId], references: [id])
-  addresses          Address[] @relation("CustomerAddresses")
-  contacts           Contact[] @relation("CustomerContacts")
-  contracts          Contract[]
-  invoices           Invoice[]
-  defaulterRecords   DefaulterRecord[]
+  company          Company           @relation(fields: [companyId], references: [id])
+  addresses        Address[]         @relation("CustomerAddresses")
+  contacts         Contact[]         @relation("CustomerContacts")
+  contracts        Contract[]
+  invoices         Invoice[]
+  defaulterRecords DefaulterRecord[]
+  stockLocations   StockLocation[]   // Cliente é também um local de estoque
+  proposals        Proposal[]
 
   @@unique([companyId, cpfCnpj])
   @@index([companyId])
@@ -152,24 +154,24 @@ model Customer {
 }
 
 model Supplier {
-  id                 String   @id @default(uuid())
-  companyId          String   @map("company_id")
+  id                 String     @id @default(uuid())
+  companyId          String     @map("company_id")
   code               String?
   type               PersonType @default(JURIDICA)
-  cpfCnpj            String   @map("cpf_cnpj")
-  razaoSocial        String   @map("razao_social")
-  nomeFantasia       String?  @map("nome_fantasia")
-  category           String?  // Categoria (manutenção, combustível, peças, etc.)
+  cpfCnpj            String     @map("cpf_cnpj")
+  razaoSocial        String     @map("razao_social")
+  nomeFantasia       String?    @map("nome_fantasia")
+  category           String?
   notes              String?
-  isActive           Boolean  @default(true) @map("is_active")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-  deletedAt          DateTime? @map("deleted_at")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  deletedAt          DateTime?  @map("deleted_at")
 
-  company            Company  @relation(fields: [companyId], references: [id])
-  addresses          Address[] @relation("SupplierAddresses")
-  contacts           Contact[] @relation("SupplierContacts")
-  assetMaintenances  AssetMaintenance[]
+  company             Company              @relation(fields: [companyId], references: [id])
+  addresses           Address[]            @relation("SupplierAddresses")
+  contacts            Contact[]            @relation("SupplierContacts")
+  assetMaintenances   AssetMaintenance[]
   vehicleMaintenances VehicleMaintenance[]
 
   @@unique([companyId, cpfCnpj])
@@ -183,86 +185,87 @@ enum PersonType {
 }
 
 model Address {
-  id            String  @id @default(uuid())
-  street        String
-  number        String?
-  complement    String?
-  neighborhood  String?
-  city          String
-  state         String
-  zipCode       String? @map("zip_code")
-  label         String? // "Principal", "Entrega", "Cobrança"
-  isMain        Boolean @default(false) @map("is_main")
+  id           String  @id @default(uuid())
+  street       String
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String
+  state        String
+  zipCode      String? @map("zip_code")
+  label        String?
+  isMain       Boolean @default(false) @map("is_main")
 
-  // Polimórfico — vinculado a Customer OU Supplier
-  customerId    String? @map("customer_id")
-  supplierId    String? @map("supplier_id")
-  customer      Customer? @relation("CustomerAddresses", fields: [customerId], references: [id])
-  supplier      Supplier? @relation("SupplierAddresses", fields: [supplierId], references: [id])
+  customerId String?   @map("customer_id")
+  supplierId String?   @map("supplier_id")
+  customer   Customer? @relation("CustomerAddresses", fields: [customerId], references: [id], onDelete: Cascade)
+  supplier   Supplier? @relation("SupplierAddresses", fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("addresses")
 }
 
 model Contact {
-  id            String  @id @default(uuid())
-  name          String
-  role          String? // Cargo/função
-  phone         String?
-  cellphone     String?
-  email         String?
-  isMain        Boolean @default(false) @map("is_main")
+  id        String  @id @default(uuid())
+  name      String
+  role      String?
+  phone     String?
+  cellphone String?
+  email     String?
+  isMain    Boolean @default(false) @map("is_main")
 
-  customerId    String? @map("customer_id")
-  supplierId    String? @map("supplier_id")
-  customer      Customer? @relation("CustomerContacts", fields: [customerId], references: [id])
-  supplier      Supplier? @relation("SupplierContacts", fields: [supplierId], references: [id])
+  customerId String?   @map("customer_id")
+  supplierId String?   @map("supplier_id")
+  customer   Customer? @relation("CustomerContacts", fields: [customerId], references: [id], onDelete: Cascade)
+  supplier   Supplier? @relation("SupplierContacts", fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("contacts")
 }
 
 // ============================================================
-// M4 — ATIVOS (Containers e Módulos Habitacionais)
+// M4 — ATIVOS
 // ============================================================
 
 model AssetType {
-  id           String  @id @default(uuid())
-  name         String  // "Container 20'", "Container 40'", "Módulo Habitacional", etc.
-  description  String?
-  isActive     Boolean @default(true) @map("is_active")
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
 
-  assets       Asset[]
+  assets Asset[]
 
   @@map("asset_types")
 }
 
 model Asset {
-  id                String      @id @default(uuid())
-  companyId         String      @map("company_id")
-  assetTypeId       String      @map("asset_type_id")
-  code              String      // Código patrimônio (ex: "CNT-001")
-  serialNumber      String?     @map("serial_number")
-  manufacturingYear Int?        @map("manufacturing_year")
-  manufacturer      String?
-  width             Decimal?    @db.Decimal(10, 2)
-  height            Decimal?    @db.Decimal(10, 2)
-  length            Decimal?    @db.Decimal(10, 2)
-  condition         AssetCondition @default(GOOD)
-  status            AssetStatus @default(AVAILABLE)
-  currentLocation   String?     @map("current_location") // Descrição da localização atual
-  dailyRate         Decimal?    @db.Decimal(12, 2) @map("daily_rate") // Valor diária padrão
-  notes             String?
-  isActive          Boolean     @default(true) @map("is_active")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
-  deletedAt         DateTime?   @map("deleted_at")
+  id                  String         @id @default(uuid())
+  companyId           String         @map("company_id")
+  assetTypeId         String         @map("asset_type_id")
+  code                String
+  serialNumber        String?        @map("serial_number")
+  manufacturingYear   Int?           @map("manufacturing_year")
+  manufacturer        String?
+  width               Decimal?       @db.Decimal(10, 2)
+  height              Decimal?       @db.Decimal(10, 2)
+  length              Decimal?       @db.Decimal(10, 2)
+  condition           AssetCondition @default(GOOD)
+  status              AssetStatus    @default(AVAILABLE)
+  currentLocation     String?        @map("current_location")
+  currentLocationId   String?        @map("current_location_id")
+  dailyRate           Decimal?       @db.Decimal(12, 2) @map("daily_rate")
+  notes               String?
+  isActive            Boolean        @default(true) @map("is_active")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  deletedAt           DateTime?      @map("deleted_at")
 
-  // Relacionamentos
-  company           Company     @relation(fields: [companyId], references: [id])
-  assetType         AssetType   @relation(fields: [assetTypeId], references: [id])
-  statusHistory     AssetStatusHistory[]
-  maintenances      AssetMaintenance[]
-  contractItems     ContractItem[]
-  transportOrders   TransportOrder[]
+  company              Company              @relation(fields: [companyId], references: [id])
+  assetType            AssetType            @relation(fields: [assetTypeId], references: [id])
+  currentStockLocation StockLocation?       @relation("CurrentLocation", fields: [currentLocationId], references: [id])
+  statusHistory        AssetStatusHistory[]
+  maintenances         AssetMaintenance[]
+  contractItems        ContractItem[]
+  transportOrders      TransportOrder[]
+  locationHistory      AssetLocationHistory[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -271,11 +274,11 @@ model Asset {
 }
 
 enum AssetStatus {
-  AVAILABLE       // Disponível no pátio
-  RENTED          // Alugado (em contrato)
-  IN_MAINTENANCE  // Em manutenção
-  IN_TRANSIT      // Em trânsito
-  DECOMMISSIONED  // Baixado (sucata/venda/perda)
+  AVAILABLE
+  RENTED
+  IN_MAINTENANCE
+  IN_TRANSIT
+  DECOMMISSIONED
 }
 
 enum AssetCondition {
@@ -286,35 +289,35 @@ enum AssetCondition {
 }
 
 model AssetStatusHistory {
-  id          String      @id @default(uuid())
-  assetId     String      @map("asset_id")
-  fromStatus  AssetStatus? @map("from_status")
-  toStatus    AssetStatus @map("to_status")
-  reason      String?
-  changedBy   String?     @map("changed_by") // userId
-  createdAt   DateTime    @default(now()) @map("created_at")
+  id         String       @id @default(uuid())
+  assetId    String       @map("asset_id")
+  fromStatus AssetStatus? @map("from_status")
+  toStatus   AssetStatus  @map("to_status")
+  reason     String?
+  changedBy  String?      @map("changed_by")
+  createdAt  DateTime     @default(now()) @map("created_at")
 
-  asset       Asset       @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@map("asset_status_history")
 }
 
 model AssetMaintenance {
-  id             String   @id @default(uuid())
-  assetId        String   @map("asset_id")
-  supplierId     String?  @map("supplier_id")
-  type           MaintenanceType @default(CORRECTIVE)
-  description    String
-  cost           Decimal? @db.Decimal(12, 2)
-  startDate      DateTime @map("start_date")
-  endDate        DateTime? @map("end_date")
-  notes          String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id          String          @id @default(uuid())
+  assetId     String          @map("asset_id")
+  supplierId  String?         @map("supplier_id")
+  type        MaintenanceType @default(CORRECTIVE)
+  description String
+  cost        Decimal?        @db.Decimal(12, 2)
+  startDate   DateTime        @map("start_date")
+  endDate     DateTime?       @map("end_date")
+  notes       String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
 
-  asset          Asset    @relation(fields: [assetId], references: [id])
-  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  asset    Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
 
   @@index([assetId])
   @@map("asset_maintenances")
@@ -326,33 +329,86 @@ enum MaintenanceType {
 }
 
 // ============================================================
-// M3 — CONTRATOS (Gestão de Contratos de Aluguel)
+// LOCAIS DE ESTOQUE
+// O cliente também é um local de estoque, permitindo rastrear
+// por onde o container passou com datas
+// ============================================================
+
+model StockLocation {
+  id         String   @id @default(uuid())
+  companyId  String   @map("company_id")
+  name       String
+  address    String?
+  customerId String?  @map("customer_id") // Se o local é um cliente
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  company    Company   @relation(fields: [companyId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  assetsHere    Asset[]                @relation("CurrentLocation")
+  movementsFrom AssetLocationHistory[] @relation("FromLocation")
+  movementsTo   AssetLocationHistory[] @relation("ToLocation")
+
+  @@index([companyId])
+  @@map("stock_locations")
+}
+
+// Histórico de movimentação de containers entre locais
+// Permite ver por onde o container passou com datas
+model AssetLocationHistory {
+  id              String       @id @default(uuid())
+  assetId         String       @map("asset_id")
+  fromLocationId  String?      @map("from_location_id")
+  toLocationId    String       @map("to_location_id")
+  movementDate    DateTime     @map("movement_date")
+  movementType    MovementType @map("movement_type")
+  notes           String?
+  createdBy       String?      @map("created_by")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  asset        Asset          @relation(fields: [assetId], references: [id])
+  fromLocation StockLocation? @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation   StockLocation  @relation("ToLocation", fields: [toLocationId], references: [id])
+
+  @@index([assetId])
+  @@map("asset_location_history")
+}
+
+// ============================================================
+// M3 — CONTRATOS
 // ============================================================
 
 model Contract {
-  id               String         @id @default(uuid())
-  companyId        String         @map("company_id")
-  customerId       String         @map("customer_id")
-  contractNumber   String         @map("contract_number") // Número do contrato legível
-  status           ContractStatus @default(DRAFT)
-  startDate        DateTime       @map("start_date")
-  endDate          DateTime?      @map("end_date")
-  paymentTerms     String?        @map("payment_terms") // Condições de pagamento
-  paymentMethod    String?        @map("payment_method") // Forma de pagamento
-  notes            String?
-  totalMonthlyValue Decimal?      @db.Decimal(14, 2) @map("total_monthly_value")
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
-  deletedAt        DateTime?      @map("deleted_at")
+  id                String         @id @default(uuid())
+  companyId         String         @map("company_id")
+  customerId        String         @map("customer_id")
+  contractNumber    String         @map("contract_number")
+  type              ContractType   @default(MEDICAO)
+  status            ContractStatus @default(DRAFT)
+  startDate         DateTime       @map("start_date")
+  endDate           DateTime?      @map("end_date")
+  paymentTerms      String?        @map("payment_terms")
+  paymentMethod     String?        @map("payment_method")
+  notes             String?
+  totalMonthlyValue Decimal?       @db.Decimal(14, 2) @map("total_monthly_value")
+  contractSignedAt  DateTime?      @map("contract_signed_at") // Data assinatura (D4)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  deletedAt         DateTime?      @map("deleted_at")
 
-  // Relacionamentos
-  company          Company        @relation(fields: [companyId], references: [id])
-  customer         Customer       @relation(fields: [customerId], references: [id])
-  items            ContractItem[]
-  addendums        ContractAddendum[]
-  measurements     Measurement[]
-  movements        ContractMovement[]
-  invoices         Invoice[]
+  company      Company            @relation(fields: [companyId], references: [id])
+  customer     Customer           @relation(fields: [customerId], references: [id])
+  items        ContractItem[]
+  analyses     ContractAnalysis[]
+  supplyOrders SupplyOrder[]
+  serviceOrders ServiceOrder[]
+  proposal     Proposal?
+  addendums    ContractAddendum[]
+  measurements Measurement[]
+  movements    ContractMovement[]
+  invoices     Invoice[]
 
   @@unique([companyId, contractNumber])
   @@index([companyId])
@@ -361,88 +417,106 @@ model Contract {
   @@map("contracts")
 }
 
+// Tipo de contrato:
+// ANTECIPADO = Faturamento antecipado (paga antes)
+// MEDICAO = Faturamento por medição (dias de uso)
+// AUTOMATICO = Faturamento automático mensal
+enum ContractType {
+  ANTECIPADO
+  MEDICAO
+  AUTOMATICO
+}
+
 enum ContractStatus {
-  DRAFT       // Rascunho
-  ACTIVE      // Ativo
-  SUSPENDED   // Suspenso
-  TERMINATED  // Encerrado
-  CANCELLED   // Cancelado
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+  CANCELLED
 }
 
 model ContractItem {
-  id            String   @id @default(uuid())
-  contractId    String   @map("contract_id")
-  assetId       String   @map("asset_id")
-  dailyRate     Decimal  @db.Decimal(12, 2) @map("daily_rate")
-  monthlyRate   Decimal? @db.Decimal(12, 2) @map("monthly_rate")
-  startDate     DateTime @map("start_date")
-  endDate       DateTime? @map("end_date")
-  isActive      Boolean  @default(true) @map("is_active")
-  notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
+  id                   String    @id @default(uuid())
+  contractId           String    @map("contract_id")
+  assetId              String    @map("asset_id")
+  dailyRate            Decimal   @db.Decimal(12, 2) @map("daily_rate")
+  monthlyRate          Decimal?  @db.Decimal(12, 2) @map("monthly_rate")
+  startDate            DateTime  @map("start_date")
+  endDate              DateTime? @map("end_date")
+  departureDate        DateTime? @map("departure_date") // Data de saída do container — cobrança começa aqui
+  returnDate           DateTime? @map("return_date")    // Data de retorno do container
+  isActive             Boolean   @default(true) @map("is_active")
+  notes                String?
+  scheduledDeliveryDate DateTime? @map("scheduled_delivery_date") // Data programada para entrega
+  deliveryBlockedReason String?  @map("delivery_blocked_reason")   // PAGAMENTO_PENDENTE | CONTRATO_NAO_ASSINADO = bloqueado
+  createdAt            DateTime  @default(now()) @map("created_at")
 
-  contract      Contract @relation(fields: [contractId], references: [id])
-  asset         Asset    @relation(fields: [assetId], references: [id])
+  contract         Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  asset            Asset             @relation(fields: [assetId], references: [id])
   measurementItems MeasurementItem[]
+  invoiceItems     InvoiceItem[]
 
   @@index([contractId])
   @@map("contract_items")
 }
 
 model ContractAddendum {
-  id            String       @id @default(uuid())
-  contractId    String       @map("contract_id")
-  addendumNumber Int         @map("addendum_number")
-  type          AddendumType
-  description   String
-  effectiveDate DateTime     @map("effective_date")
-  notes         String?
-  createdAt     DateTime     @default(now()) @map("created_at")
+  id             String       @id @default(uuid())
+  contractId     String       @map("contract_id")
+  addendumNumber Int          @map("addendum_number")
+  type           AddendumType
+  description    String
+  effectiveDate  DateTime     @map("effective_date")
+  notes          String?
+  createdAt      DateTime     @default(now()) @map("created_at")
 
-  contract      Contract     @relation(fields: [contractId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 
   @@index([contractId])
   @@map("contract_addendums")
 }
 
 enum AddendumType {
-  EXTENSION        // Prorrogação
-  ITEM_ADDITION    // Inclusão de itens
-  ITEM_REMOVAL     // Remoção de itens
-  PRICE_ADJUSTMENT // Reajuste de preço
-  PARTIAL_CLOSURE  // Encerramento parcial
+  EXTENSION
+  ITEM_ADDITION
+  ITEM_REMOVAL
+  PRICE_ADJUSTMENT
+  PARTIAL_CLOSURE
   OTHER
 }
 
 model Measurement {
-  id            String   @id @default(uuid())
-  contractId    String   @map("contract_id")
-  periodStart   DateTime @map("period_start")
-  periodEnd     DateTime @map("period_end")
-  totalValue    Decimal  @db.Decimal(14, 2) @map("total_value")
-  status        MeasurementStatus @default(DRAFT)
-  notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id          String            @id @default(uuid())
+  contractId  String            @map("contract_id")
+  periodStart DateTime          @map("period_start")
+  periodEnd   DateTime          @map("period_end")
+  totalValue  Decimal           @db.Decimal(14, 2) @map("total_value")
+  status      MeasurementStatus @default(DRAFT)
+  notes       String?
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
 
-  contract      Contract @relation(fields: [contractId], references: [id])
-  items         MeasurementItem[]
-  invoice       Invoice?
+  contract Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  items    MeasurementItem[]
+  invoice  Invoice?
 
   @@index([contractId])
   @@map("measurements")
 }
 
 model MeasurementItem {
-  id              String       @id @default(uuid())
-  measurementId   String       @map("measurement_id")
-  contractItemId  String       @map("contract_item_id")
-  days            Int          // Número de dias medidos
-  dailyRate       Decimal      @db.Decimal(12, 2) @map("daily_rate")
-  totalValue      Decimal      @db.Decimal(14, 2) @map("total_value")
+  id             String  @id @default(uuid())
+  measurementId  String  @map("measurement_id")
+  contractItemId String  @map("contract_item_id")
+  days           Int
+  excludedDays   Int     @default(0) @map("excluded_days")
+  excludedReason String? @map("excluded_reason") // Motivo de não faturar certos dias
+  billedDays     Int?    @map("billed_days")     // Dias efetivamente cobrados
+  dailyRate      Decimal @db.Decimal(12, 2) @map("daily_rate")
+  totalValue     Decimal @db.Decimal(14, 2) @map("total_value")
 
-  measurement     Measurement  @relation(fields: [measurementId], references: [id])
-  contractItem    ContractItem @relation(fields: [contractItemId], references: [id])
+  measurement  Measurement  @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  contractItem ContractItem @relation(fields: [contractItemId], references: [id])
 
   @@map("measurement_items")
 }
@@ -455,53 +529,56 @@ enum MeasurementStatus {
 }
 
 model ContractMovement {
-  id            String       @id @default(uuid())
-  contractId    String       @map("contract_id")
-  type          MovementType
-  assetCode     String?      @map("asset_code")
-  movementDate  DateTime     @map("movement_date")
-  address       String?      // Endereço de entrega/recolhimento
-  notes         String?
-  createdAt     DateTime     @default(now()) @map("created_at")
+  id           String       @id @default(uuid())
+  contractId   String       @map("contract_id")
+  type         MovementType
+  assetCode    String?      @map("asset_code")
+  movementDate DateTime     @map("movement_date")
+  address      String?
+  notes        String?
+  createdAt    DateTime     @default(now()) @map("created_at")
 
-  contract      Contract     @relation(fields: [contractId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 
   @@index([contractId])
   @@map("contract_movements")
 }
 
 enum MovementType {
-  DELIVERY    // Entrega no cliente
-  PICKUP      // Recolhimento do cliente
-  SWAP        // Troca
+  DELIVERY
+  PICKUP
+  SWAP
+  RETIRADA
+  REMOCAO
+  TROCA_AR
 }
 
 // ============================================================
-// M5 — FROTA (Veículos, Motoristas, Transporte)
+// M5 — FROTA
 // ============================================================
 
 model Vehicle {
-  id               String   @id @default(uuid())
-  companyId        String   @map("company_id")
-  plate            String   @unique
-  type             String   // Caminhão, Carreta, Cavalo Mecânico, etc.
-  brand            String?
-  model            String?
-  year             Int?
-  renavam          String?
-  loadCapacityKg   Decimal? @db.Decimal(10, 2) @map("load_capacity_kg")
-  currentKm        Int?     @map("current_km")
-  status           VehicleStatus @default(AVAILABLE)
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  id             String        @id @default(uuid())
+  companyId      String        @map("company_id")
+  plate          String        @unique
+  type           String
+  brand          String?
+  model          String?
+  year           Int?
+  renavam        String?
+  loadCapacityKg Decimal?      @db.Decimal(10, 2) @map("load_capacity_kg")
+  currentKm      Int?          @map("current_km")
+  status         VehicleStatus @default(AVAILABLE)
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
 
-  company          Company  @relation(fields: [companyId], references: [id])
-  transportOrders  TransportOrder[]
-  checklists       VehicleChecklist[]
-  fuelRecords      FuelRecord[]
-  maintenances     VehicleMaintenance[]
+  company         Company              @relation(fields: [companyId], references: [id])
+  transportOrders TransportOrder[]
+  checklists      VehicleChecklist[]
+  fuelRecords     FuelRecord[]
+  maintenances    VehicleMaintenance[]
 
   @@index([companyId])
   @@map("vehicles")
@@ -515,62 +592,62 @@ enum VehicleStatus {
 }
 
 model Driver {
-  id               String   @id @default(uuid())
-  companyId        String   @map("company_id")
-  name             String
-  cpf              String   @unique
-  cnhNumber        String   @map("cnh_number")
-  cnhCategory      String   @map("cnh_category") // A, B, C, D, E
-  cnhExpiry        DateTime @map("cnh_expiry")
-  phone            String?
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  companyId   String   @map("company_id")
+  name        String
+  cpf         String   @unique
+  cnhNumber   String   @map("cnh_number")
+  cnhCategory String   @map("cnh_category")
+  cnhExpiry   DateTime @map("cnh_expiry")
+  phone       String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  company          Company  @relation(fields: [companyId], references: [id])
-  transportOrders  TransportOrder[]
+  company         Company          @relation(fields: [companyId], references: [id])
+  transportOrders TransportOrder[]
 
   @@index([companyId])
   @@map("drivers")
 }
 
 model VehicleChecklist {
-  id          String   @id @default(uuid())
-  vehicleId   String   @map("vehicle_id")
-  checkDate   DateTime @map("check_date")
-  checkedBy   String   @map("checked_by") // Nome ou userId
-  items       Json     // Array de { item: string, status: "OK"|"NOK", notes?: string }
-  overallStatus String @map("overall_status") // "APPROVED", "REJECTED", "CONDITIONAL"
-  notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  vehicleId     String   @map("vehicle_id")
+  checkDate     DateTime @map("check_date")
+  checkedBy     String   @map("checked_by")
+  items         Json
+  overallStatus String   @map("overall_status")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId])
   @@map("vehicle_checklists")
 }
 
 model TransportOrder {
-  id              String             @id @default(uuid())
-  vehicleId       String?            @map("vehicle_id")
-  driverId        String?            @map("driver_id")
-  assetId         String?            @map("asset_id")
-  requestedBy     String?            @map("requested_by") // userId
-  orderNumber     String             @map("order_number")
-  type            TransportOrderType
-  origin          String
-  destination     String
-  scheduledDate   DateTime           @map("scheduled_date")
-  completedDate   DateTime?          @map("completed_date")
-  status          TransportOrderStatus @default(PENDING)
-  notes           String?
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
+  id            String               @id @default(uuid())
+  vehicleId     String?              @map("vehicle_id")
+  driverId      String?              @map("driver_id")
+  assetId       String?              @map("asset_id")
+  requestedBy   String?              @map("requested_by")
+  orderNumber   String               @map("order_number")
+  type          TransportOrderType
+  origin        String
+  destination   String
+  scheduledDate DateTime             @map("scheduled_date")
+  completedDate DateTime?            @map("completed_date")
+  status        TransportOrderStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
 
-  vehicle         Vehicle?           @relation(fields: [vehicleId], references: [id])
-  driver          Driver?            @relation(fields: [driverId], references: [id])
-  asset           Asset?             @relation(fields: [assetId], references: [id])
-  requestedByUser User?              @relation(fields: [requestedBy], references: [id])
+  vehicle         Vehicle? @relation(fields: [vehicleId], references: [id])
+  driver          Driver?  @relation(fields: [driverId], references: [id])
+  asset           Asset?   @relation(fields: [assetId], references: [id])
+  requestedByUser User?    @relation(fields: [requestedBy], references: [id])
 
   @@index([status])
   @@map("transport_orders")
@@ -591,70 +668,73 @@ enum TransportOrderStatus {
 }
 
 model FuelRecord {
-  id          String   @id @default(uuid())
-  vehicleId   String   @map("vehicle_id")
-  date        DateTime
-  liters      Decimal  @db.Decimal(10, 2)
-  totalCost   Decimal  @db.Decimal(12, 2) @map("total_cost")
-  currentKm   Int      @map("current_km")
-  station     String?
-  notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  vehicleId String   @map("vehicle_id")
+  date      DateTime
+  liters    Decimal  @db.Decimal(10, 2)
+  totalCost Decimal  @db.Decimal(12, 2) @map("total_cost")
+  currentKm Int      @map("current_km")
+  station   String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
 
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId])
   @@map("fuel_records")
 }
 
 model VehicleMaintenance {
-  id            String   @id @default(uuid())
-  vehicleId     String   @map("vehicle_id")
-  supplierId    String?  @map("supplier_id")
+  id            String          @id @default(uuid())
+  vehicleId     String          @map("vehicle_id")
+  supplierId    String?         @map("supplier_id")
   type          MaintenanceType @default(CORRECTIVE)
   description   String
-  cost          Decimal? @db.Decimal(12, 2)
-  currentKm     Int?     @map("current_km")
-  startDate     DateTime @map("start_date")
-  endDate       DateTime? @map("end_date")
-  partsReplaced String?  @map("parts_replaced")
+  cost          Decimal?        @db.Decimal(12, 2)
+  currentKm     Int?            @map("current_km")
+  startDate     DateTime        @map("start_date")
+  endDate       DateTime?       @map("end_date")
+  partsReplaced String?         @map("parts_replaced")
   notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
 
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
-  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
 
   @@index([vehicleId])
   @@map("vehicle_maintenances")
 }
 
 // ============================================================
-// M6 — COBRANÇA (Títulos, Inadimplência, Acordos)
+// M6 — COBRANÇA
 // ============================================================
 
 model Invoice {
-  id               String        @id @default(uuid())
-  companyId        String        @map("company_id")
-  customerId       String        @map("customer_id")
-  contractId       String?       @map("contract_id")
-  measurementId    String?       @unique @map("measurement_id")
-  invoiceNumber    String        @map("invoice_number")
-  issueDate        DateTime      @map("issue_date")
-  dueDate          DateTime      @map("due_date")
-  amount           Decimal       @db.Decimal(14, 2)
-  paidAmount       Decimal       @default(0) @db.Decimal(14, 2) @map("paid_amount")
-  status           InvoiceStatus @default(OPEN)
-  notes            String?
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  id                 String        @id @default(uuid())
+  companyId          String        @map("company_id")
+  customerId         String        @map("customer_id")
+  contractId         String?       @map("contract_id")
+  measurementId      String?       @unique @map("measurement_id")
+  invoiceNumber      String        @map("invoice_number")
+  issueDate          DateTime      @map("issue_date")
+  dueDate            DateTime      @map("due_date")
+  billingPeriodStart DateTime?     @map("billing_period_start") // Período de faturamento
+  billingPeriodEnd   DateTime?     @map("billing_period_end")
+  amount             Decimal       @db.Decimal(14, 2)
+  paidAmount         Decimal       @default(0) @db.Decimal(14, 2) @map("paid_amount")
+  status             InvoiceStatus @default(OPEN)
+  notes              String?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  company          Company       @relation(fields: [companyId], references: [id])
-  customer         Customer      @relation(fields: [customerId], references: [id])
-  contract         Contract?     @relation(fields: [contractId], references: [id])
-  measurement      Measurement?  @relation(fields: [measurementId], references: [id])
-  payments         InvoicePayment[]
+  company           Company            @relation(fields: [companyId], references: [id])
+  customer          Customer           @relation(fields: [customerId], references: [id])
+  contract          Contract?          @relation(fields: [contractId], references: [id])
+  measurement       Measurement?       @relation(fields: [measurementId], references: [id])
+  payments          InvoicePayment[]
   collectionActions CollectionAction[]
+  items             InvoiceItem[]
 
   @@unique([companyId, invoiceNumber])
   @@index([companyId])
@@ -664,14 +744,36 @@ model Invoice {
   @@map("invoices")
 }
 
+// Item de fatura — cada container faturado de um contrato
+model InvoiceItem {
+  id               String   @id @default(uuid())
+  invoiceId        String   @map("invoice_id")
+  contractItemId   String   @map("contract_item_id")
+  assetCode        String   @map("asset_code")
+  periodStart      DateTime @map("period_start")
+  periodEnd        DateTime @map("period_end")
+  totalDays        Int      @map("total_days")
+  excludedDays     Int      @default(0) @map("excluded_days")
+  excludedReason   String?  @map("excluded_reason")
+  billedDays       Int      @map("billed_days")
+  dailyRate        Decimal  @db.Decimal(12, 2) @map("daily_rate")
+  totalValue       Decimal  @db.Decimal(14, 2) @map("total_value")
+
+  invoice      Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  contractItem ContractItem @relation(fields: [contractItemId], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
 enum InvoiceStatus {
-  OPEN           // Em aberto
-  PAID           // Pago
-  PARTIALLY_PAID // Parcialmente pago
-  OVERDUE        // Vencido
-  IN_AGREEMENT   // Em acordo
-  CANCELLED      // Cancelado
-  WRITTEN_OFF    // Baixado (prejuízo)
+  OPEN
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  IN_AGREEMENT
+  CANCELLED
+  WRITTEN_OFF
 }
 
 model InvoicePayment {
@@ -679,49 +781,49 @@ model InvoicePayment {
   invoiceId     String   @map("invoice_id")
   paymentDate   DateTime @map("payment_date")
   amount        Decimal  @db.Decimal(14, 2)
-  paymentMethod String?  @map("payment_method") // Boleto, PIX, Transferência, etc.
+  paymentMethod String?  @map("payment_method")
   bankAccount   String?  @map("bank_account")
-  reference     String?  // Número do comprovante
+  reference     String?
   notes         String?
   createdAt     DateTime @default(now()) @map("created_at")
 
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@map("invoice_payments")
 }
 
 model DefaulterRecord {
-  id            String   @id @default(uuid())
-  customerId    String   @map("customer_id")
-  startDate     DateTime @map("start_date")
-  endDate       DateTime? @map("end_date")
-  totalDebt     Decimal  @db.Decimal(14, 2) @map("total_debt")
-  reason        String?
-  isResolved    Boolean  @default(false) @map("is_resolved")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id         String    @id @default(uuid())
+  customerId String    @map("customer_id")
+  startDate  DateTime  @map("start_date")
+  endDate    DateTime? @map("end_date")
+  totalDebt  Decimal   @db.Decimal(14, 2) @map("total_debt")
+  reason     String?
+  isResolved Boolean   @default(false) @map("is_resolved")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  customer      Customer @relation(fields: [customerId], references: [id])
-  agreement     PaymentAgreement?
+  customer  Customer          @relation(fields: [customerId], references: [id])
+  agreement PaymentAgreement?
 
   @@index([customerId])
   @@map("defaulter_records")
 }
 
 model CollectionAction {
-  id               String   @id @default(uuid())
-  invoiceId        String   @map("invoice_id")
-  performedById    String?  @map("performed_by_id")
-  type             CollectionActionType
-  actionDate       DateTime @map("action_date")
-  description      String?
-  result           String?
-  nextActionDate   DateTime? @map("next_action_date")
-  createdAt        DateTime @default(now()) @map("created_at")
+  id             String               @id @default(uuid())
+  invoiceId      String               @map("invoice_id")
+  performedById  String?              @map("performed_by_id")
+  type           CollectionActionType
+  actionDate     DateTime             @map("action_date")
+  description    String?
+  result         String?
+  nextActionDate DateTime?            @map("next_action_date")
+  createdAt      DateTime             @default(now()) @map("created_at")
 
-  invoice          Invoice  @relation(fields: [invoiceId], references: [id])
-  performedBy      User?    @relation(fields: [performedById], references: [id])
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  performedBy User?   @relation(fields: [performedById], references: [id])
 
   @@index([invoiceId])
   @@map("collection_actions")
@@ -738,19 +840,19 @@ enum CollectionActionType {
 }
 
 model PaymentAgreement {
-  id                String   @id @default(uuid())
-  defaulterRecordId String   @unique @map("defaulter_record_id")
-  agreementDate     DateTime @map("agreement_date")
-  originalDebt      Decimal  @db.Decimal(14, 2) @map("original_debt")
-  discountPercent   Decimal? @db.Decimal(5, 2) @map("discount_percent")
-  finalAmount       Decimal  @db.Decimal(14, 2) @map("final_amount")
+  id                String          @id @default(uuid())
+  defaulterRecordId String          @unique @map("defaulter_record_id")
+  agreementDate     DateTime        @map("agreement_date")
+  originalDebt      Decimal         @db.Decimal(14, 2) @map("original_debt")
+  discountPercent   Decimal?        @db.Decimal(5, 2) @map("discount_percent")
+  finalAmount       Decimal         @db.Decimal(14, 2) @map("final_amount")
   installments      Int
   notes             String?
   status            AgreementStatus @default(ACTIVE)
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
-  defaulterRecord   DefaulterRecord @relation(fields: [defaulterRecordId], references: [id])
+  defaulterRecord DefaulterRecord @relation(fields: [defaulterRecordId], references: [id])
 
   @@map("payment_agreements")
 }
@@ -777,7 +879,7 @@ model Bidding {
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  company        Company       @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 
   @@index([companyId])
   @@map("biddings")
@@ -788,5 +890,145 @@ enum BiddingStatus {
   IN_ANALYSIS
   WON
   LOST
+  CANCELLED
+}
+
+// ============================================================
+// PROPOSTAS
+// ============================================================
+
+model Proposal {
+  id             String        @id @default(uuid())
+  companyId      String        @map("company_id")
+  customerId     String?       @map("customer_id")
+  proposalNumber String        @map("proposal_number")
+  type           ProposalType  @default(LOCACAO)
+  status         ProposalStatus @default(RASCUNHO)
+  items          Json          @default("[]")
+  valorTotal     Decimal       @db.Decimal(14, 2) @map("valor_total")
+  companyName    String?       @map("company_name")
+  contactName    String?       @map("contact_name")
+  phone          String?
+  email          String?
+  contractId     String?       @unique @map("contract_id")
+  invoiceId      String?       @map("invoice_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  company  Company   @relation(fields: [companyId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@unique([companyId, proposalNumber])
+  @@index([companyId])
+  @@index([status])
+  @@map("proposals")
+}
+
+enum ProposalType {
+  VENDA
+  LOCACAO
+  EVENTO
+}
+
+enum ProposalStatus {
+  RASCUNHO
+  ENVIADA
+  ACEITA
+  RECUSADA
+  CONVERTIDA
+}
+
+// ============================================================
+// ANÁLISE CRÍTICA, DOCUMENTO AF, ORDEM DE SERVIÇO
+// ============================================================
+
+model ContractAnalysis {
+  id              String   @id @default(uuid())
+  contractId      String   @map("contract_id")
+  proposalNumber String?  @map("proposal_number")
+  proposalDate   DateTime? @map("proposal_date")
+  customerName   String?  @map("customer_name")
+  cnpj           String?
+  addressCnpj    String?  @map("address_cnpj")
+  addressInstall  String? @map("address_install")
+  contactComercial String? @map("contact_comercial")
+  contactFinanceiro String? @map("contact_financeiro")
+  contactRecebimento String? @map("contact_recebimento")
+  responsible    String?
+  witness        String?
+  equipmentModels String? @map("equipment_models")
+  monthlyValue   Decimal? @db.Decimal(14, 2) @map("monthly_value")
+  monthsRental   Int?     @map("months_rental")
+  expectedExit   DateTime? @map("expected_exit")
+  extraData      Json?    @map("extra_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@map("contract_analyses")
+}
+
+model SupplyOrder {
+  id              String   @id @default(uuid())
+  contractId      String   @map("contract_id")
+  supplyNumber    String   @map("supply_number")
+  customerName   String?  @map("customer_name")
+  mobilization   Boolean  @default(false)
+  equipmentCount  Int?    @map("equipment_count")
+  deliveryDate    DateTime? @map("delivery_date")
+  layoutNotes    String?  @map("layout_notes")
+  technicalNotes  String?  @map("technical_notes")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, supplyNumber])
+  @@index([contractId])
+  @@map("supply_orders")
+}
+
+model ServiceOrder {
+  id           String        @id @default(uuid())
+  companyId    String        @map("company_id")
+  contractId   String        @map("contract_id")
+  orderNumber  String        @map("order_number")
+  type         ServiceOrderType
+  address      String?
+  addressTo    String?       @map("address_to")
+  phone        String?
+  scheduledDate DateTime?    @map("scheduled_date")
+  freightValue Decimal?      @db.Decimal(14, 2) @map("freight_value")
+  extraTax     Decimal?      @db.Decimal(14, 2) @map("extra_tax")
+  notes        String?
+  status       ServiceOrderStatus @default(PENDING)
+  emitNf       Boolean       @default(true) @map("emit_nf")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  company  Company  @relation(fields: [companyId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, orderNumber])
+  @@index([contractId])
+  @@index([companyId])
+  @@map("service_orders")
+}
+
+enum ServiceOrderType {
+  INSTALACAO
+  RETIRADA
+  REMOCAO
+  TROCA_AR
+  MANUTENCAO
+}
+
+enum ServiceOrderStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
   CANCELLED
 }

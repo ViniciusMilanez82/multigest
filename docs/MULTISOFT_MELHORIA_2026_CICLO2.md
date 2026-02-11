@@ -332,12 +332,18 @@ O MultiGest é um sistema web de gestão para aluguel de containers e módulos. 
 
 ## 7) STATUS
 
-# ✅ APROVADO
+# ✅ IMPLEMENTADO (Ciclo 2 concluído)
 
-**Correção aplicada:** Todas as chamadas API foram corrigidas (removido `/api` duplicado). O frontend usa baseURL `/api`, portanto paths devem ser `/dashboard/overview`, `/contracts`, etc., e não `/api/dashboard/overview`.
+**Fase 1:** Correção das chamadas API — concluída.
 
-**Próximo passo:** Implementar Fase 2 (prefill análise crítica, aviso OS, preview reajuste).
+**Fase 2:** Prefill Análise Crítica, aviso ao criar OS com item bloqueado, preview Reajuste IGPM — concluída.
+
+**Fase 3:** Badge nas abas do contrato, botão Agendar na Expedição, número AF automático — concluída.
+
+**Fase 4:** OS integrada ao painel de expedição — concluída.
+
+**Propostas como origem:** Propostas em primeiro no menu; card de conversão em contrato; vínculo proposta ↔ contrato.
 
 ---
 
-*Documento gerado pelo processo MULTISOFT de melhoria. Etapas 1–6 executadas. Revisão final: QA identificou bloqueio.*
+*Documento gerado pelo processo MULTISOFT de melhoria. Etapas 1–6 executadas. Todas as melhorias do Ciclo 2 implementadas em 2026-02.*
