@@ -13,7 +13,9 @@ RUN npm ci
 COPY . .
 
 ARG NEXT_PUBLIC_API_URL=/api
+ARG BACKEND_URL=http://localhost:3001/api
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV BACKEND_URL=${BACKEND_URL}
 RUN npm run build
 
 # Stage 2: Production
