@@ -11,6 +11,8 @@ import { ChangeContractStatusDto } from './dto/change-status.dto';
 import { CreateMeasurementDto } from './dto/create-measurement.dto';
 import { CreateMovementDto } from './dto/create-movement.dto';
 import { CreateAddendumDto } from './dto/create-addendum.dto';
+import { CreateContractAnalysisDto } from './dto/create-analysis.dto';
+import { CreateSupplyOrderDto } from './dto/create-supply-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompanyGuard } from '../auth/company.guard';
 
@@ -25,6 +27,12 @@ export class ContractsController {
   @ApiOperation({ summary: 'Criar contrato' })
   create(@Headers('x-company-id') companyId: string, @Body() dto: CreateContractDto) {
     return this.contractsService.create(companyId, dto);
+  }
+
+  @Post('reajuste-igpm')
+  @ApiOperation({ summary: 'Reajuste IGPM em massa' })
+  reajusteIgpm(@Headers('x-company-id') companyId: string, @Body() dto: { percentual: number; contractIds?: string[] }) {
+    return this.contractsService.reajusteIgpm(companyId, dto);
   }
 
   @Get()
@@ -113,5 +121,45 @@ export class ContractsController {
   @Get(':id/addendums')
   listAddendums(@Headers('x-company-id') companyId: string, @Param('id') id: string) {
     return this.contractsService.listAddendums(id);
+  }
+
+  @Post(':id/analyses')
+  createAnalysis(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Body() dto: CreateContractAnalysisDto) {
+    return this.contractsService.createAnalysis(companyId, id, dto);
+  }
+
+  @Get(':id/analyses')
+  listAnalyses(@Headers('x-company-id') companyId: string, @Param('id') id: string) {
+    return this.contractsService.listAnalyses(id);
+  }
+
+  @Patch(':id/analyses/:analysisId')
+  updateAnalysis(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Param('analysisId') analysisId: string, @Body() dto: CreateContractAnalysisDto) {
+    return this.contractsService.updateAnalysis(companyId, id, analysisId, dto);
+  }
+
+  @Post(':id/supply-orders')
+  createSupplyOrder(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Body() dto: CreateSupplyOrderDto) {
+    return this.contractsService.createSupplyOrder(companyId, id, dto);
+  }
+
+  @Get(':id/supply-orders')
+  listSupplyOrders(@Headers('x-company-id') companyId: string, @Param('id') id: string) {
+    return this.contractsService.listSupplyOrders(id);
+  }
+
+  @Patch(':id/items/:itemId/delivery')
+  updateItemDelivery(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Param('itemId') itemId: string, @Body() dto: { scheduledDeliveryDate?: string; deliveryBlockedReason?: string | null }) {
+    return this.contractsService.updateItemDelivery(companyId, id, itemId, dto);
+  }
+
+  @Patch(':id/sign')
+  markSigned(@Headers('x-company-id') companyId: string, @Param('id') id: string) {
+    return this.contractsService.markContractSigned(companyId, id);
+  }
+
+  @Post(':id/troca-titularidade')
+  trocaTitularidade(@Headers('x-company-id') companyId: string, @Param('id') id: string, @Body() dto: { newCustomerId: string }) {
+    return this.contractsService.trocaTitularidade(companyId, id, dto.newCustomerId);
   }
 }

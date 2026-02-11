@@ -106,7 +106,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 **Via pacote:** rodar `criar-deploy.ps1`, enviar o tar.gz, extrair em cima da pasta existente e `bash deploy.sh`.
 
-> **Nota:** Ao atualizar, a migration `add_proposals` (tabela de propostas) será aplicada automaticamente na subida do backend.
+> **Nota:** Ao atualizar, as migrations serão aplicadas automaticamente na subida do backend (`prisma db push`). Inclui: análise crítica, documento AF, ordens de serviço, painel de expedição e travas.
 
 ---
 

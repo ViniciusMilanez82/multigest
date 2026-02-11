@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, UseGuards } from '@nestjs/common';
+import { Controller, Get, Headers, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompanyGuard } from '../auth/company.guard';
@@ -14,5 +14,10 @@ export class DashboardController {
   @Get('overview')
   getOverview(@Headers('x-company-id') companyId: string) {
     return this.dashboardService.getOverview(companyId);
+  }
+
+  @Get('expedition')
+  getExpeditionPanel(@Headers('x-company-id') companyId: string, @Query() query: any) {
+    return this.dashboardService.getExpeditionPanel(companyId, query);
   }
 }

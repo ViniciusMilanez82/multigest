@@ -48,6 +48,7 @@ model Company {
   auditLogs      AuditLog[]
   stockLocations StockLocation[]
   proposals      Proposal[]
+  serviceOrders  ServiceOrder[]
 
   @@map("companies")
 }
@@ -389,6 +390,7 @@ model Contract {
   paymentMethod     String?        @map("payment_method")
   notes             String?
   totalMonthlyValue Decimal?       @db.Decimal(14, 2) @map("total_monthly_value")
+  contractSignedAt  DateTime?      @map("contract_signed_at") // Data assinatura (D4)
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
   deletedAt         DateTime?      @map("deleted_at")
@@ -396,6 +398,9 @@ model Contract {
   company      Company            @relation(fields: [companyId], references: [id])
   customer     Customer           @relation(fields: [customerId], references: [id])
   items        ContractItem[]
+  analyses     ContractAnalysis[]
+  supplyOrders SupplyOrder[]
+  serviceOrders ServiceOrder[]
   addendums    ContractAddendum[]
   measurements Measurement[]
   movements    ContractMovement[]
@@ -427,18 +432,20 @@ enum ContractStatus {
 }
 
 model ContractItem {
-  id            String    @id @default(uuid())
-  contractId    String    @map("contract_id")
-  assetId       String    @map("asset_id")
-  dailyRate     Decimal   @db.Decimal(12, 2) @map("daily_rate")
-  monthlyRate   Decimal?  @db.Decimal(12, 2) @map("monthly_rate")
-  startDate     DateTime  @map("start_date")
-  endDate       DateTime? @map("end_date")
-  departureDate DateTime? @map("departure_date") // Data de saída do container — cobrança começa aqui
-  returnDate    DateTime? @map("return_date")    // Data de retorno do container
-  isActive      Boolean   @default(true) @map("is_active")
-  notes         String?
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id                   String    @id @default(uuid())
+  contractId           String    @map("contract_id")
+  assetId              String    @map("asset_id")
+  dailyRate            Decimal   @db.Decimal(12, 2) @map("daily_rate")
+  monthlyRate          Decimal?  @db.Decimal(12, 2) @map("monthly_rate")
+  startDate            DateTime  @map("start_date")
+  endDate              DateTime? @map("end_date")
+  departureDate        DateTime? @map("departure_date") // Data de saída do container — cobrança começa aqui
+  returnDate           DateTime? @map("return_date")    // Data de retorno do container
+  isActive             Boolean   @default(true) @map("is_active")
+  notes                String?
+  scheduledDeliveryDate DateTime? @map("scheduled_delivery_date") // Data programada para entrega
+  deliveryBlockedReason String?  @map("delivery_blocked_reason")   // PAGAMENTO_PENDENTE | CONTRATO_NAO_ASSINADO = bloqueado
+  createdAt            DateTime  @default(now()) @map("created_at")
 
   contract         Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
   asset            Asset             @relation(fields: [assetId], references: [id])
@@ -537,6 +544,9 @@ enum MovementType {
   DELIVERY
   PICKUP
   SWAP
+  RETIRADA
+  REMOCAO
+  TROCA_AR
 }
 
 // ============================================================
@@ -922,4 +932,98 @@ enum ProposalStatus {
   ACEITA
   RECUSADA
   CONVERTIDA
+}
+
+// ============================================================
+// ANÁLISE CRÍTICA, DOCUMENTO AF, ORDEM DE SERVIÇO
+// ============================================================
+
+model ContractAnalysis {
+  id              String   @id @default(uuid())
+  contractId      String   @map("contract_id")
+  proposalNumber String?  @map("proposal_number")
+  proposalDate   DateTime? @map("proposal_date")
+  customerName   String?  @map("customer_name")
+  cnpj           String?
+  addressCnpj    String?  @map("address_cnpj")
+  addressInstall  String? @map("address_install")
+  contactComercial String? @map("contact_comercial")
+  contactFinanceiro String? @map("contact_financeiro")
+  contactRecebimento String? @map("contact_recebimento")
+  responsible    String?
+  witness        String?
+  equipmentModels String? @map("equipment_models")
+  monthlyValue   Decimal? @db.Decimal(14, 2) @map("monthly_value")
+  monthsRental   Int?     @map("months_rental")
+  expectedExit   DateTime? @map("expected_exit")
+  extraData      Json?    @map("extra_data")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@map("contract_analyses")
+}
+
+model SupplyOrder {
+  id              String   @id @default(uuid())
+  contractId      String   @map("contract_id")
+  supplyNumber    String   @map("supply_number")
+  customerName   String?  @map("customer_name")
+  mobilization   Boolean  @default(false)
+  equipmentCount  Int?    @map("equipment_count")
+  deliveryDate    DateTime? @map("delivery_date")
+  layoutNotes    String?  @map("layout_notes")
+  technicalNotes  String?  @map("technical_notes")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, supplyNumber])
+  @@index([contractId])
+  @@map("supply_orders")
+}
+
+model ServiceOrder {
+  id           String        @id @default(uuid())
+  companyId    String        @map("company_id")
+  contractId   String        @map("contract_id")
+  orderNumber  String        @map("order_number")
+  type         ServiceOrderType
+  address      String?
+  addressTo    String?       @map("address_to")
+  phone        String?
+  scheduledDate DateTime?    @map("scheduled_date")
+  freightValue Decimal?      @db.Decimal(14, 2) @map("freight_value")
+  extraTax     Decimal?      @db.Decimal(14, 2) @map("extra_tax")
+  notes        String?
+  status       ServiceOrderStatus @default(PENDING)
+  emitNf       Boolean       @default(true) @map("emit_nf")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  company  Company  @relation(fields: [companyId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, orderNumber])
+  @@index([contractId])
+  @@index([companyId])
+  @@map("service_orders")
+}
+
+enum ServiceOrderType {
+  INSTALACAO
+  RETIRADA
+  REMOCAO
+  TROCA_AR
+  MANUTENCAO
+}
+
+enum ServiceOrderStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

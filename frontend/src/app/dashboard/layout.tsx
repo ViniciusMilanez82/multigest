@@ -26,6 +26,7 @@ import {
   Users,
   Building2,
   MapPin,
+  ClipboardList,
   LogOut,
   ChevronDown,
   Menu,
@@ -45,6 +46,7 @@ const navGroups = [
     title: "Operacional",
     items: [
       { name: "Contratos", href: "/dashboard/contracts", icon: FileText },
+      { name: "Expedição", href: "/dashboard/expedition", icon: ClipboardList },
       { name: "Propostas", href: "/dashboard/proposals", icon: FileCheck },
       { name: "Ativos", href: "/dashboard/ativos", icon: Package },
       { name: "Estoque", href: "/dashboard/stock-locations", icon: MapPin },

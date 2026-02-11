@@ -46,4 +46,9 @@ export class AddContractItemDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Data programada para entrega' })
+  @IsOptional()
+  @IsDateString()
+  scheduledDeliveryDate?: string;
 }

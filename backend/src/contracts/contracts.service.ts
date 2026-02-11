@@ -239,6 +239,7 @@ export class ContractsService {
         endDate: dto.endDate ? new Date(dto.endDate) : null,
         departureDate: dto.departureDate ? new Date(dto.departureDate) : null,
         notes: dto.notes,
+        scheduledDeliveryDate: dto.scheduledDeliveryDate ? new Date(dto.scheduledDeliveryDate) : null,
       },
       include: { asset: { include: { assetType: true } } },
     });
@@ -386,5 +387,183 @@ export class ContractsService {
       where: { contractId },
       orderBy: { addendumNumber: 'asc' },
     });
+  }
+
+  // ─── TRAVA EXPEDIÇÃO ───
+
+  async updateItemDelivery(companyId: string, contractId: string, itemId: string, dto: { scheduledDeliveryDate?: string; deliveryBlockedReason?: string | null }) {
+    await this.findOne(companyId, contractId);
+    const item = await this.prisma.contractItem.findFirst({ where: { id: itemId, contractId } });
+    if (!item) throw new NotFoundException('Item não encontrado');
+    const data: any = {};
+    if (dto.scheduledDeliveryDate !== undefined) data.scheduledDeliveryDate = dto.scheduledDeliveryDate ? new Date(dto.scheduledDeliveryDate) : null;
+    if (dto.deliveryBlockedReason !== undefined) data.deliveryBlockedReason = dto.deliveryBlockedReason || null;
+    return this.prisma.contractItem.update({
+      where: { id: itemId },
+      data,
+      include: { asset: { include: { assetType: true } } },
+    });
+  }
+
+  async markContractSigned(companyId: string, id: string) {
+    await this.findOne(companyId, id);
+    return this.prisma.contract.update({
+      where: { id },
+      data: { contractSignedAt: new Date() },
+      include: { customer: true, items: { include: { asset: true } } },
+    });
+  }
+
+  // ─── REAJUSTE IGPM ───
+
+  async reajusteIgpm(companyId: string, dto: { percentual: number; contractIds?: string[] }) {
+    const where: any = { companyId, deletedAt: null, status: 'ACTIVE' };
+    if (dto.contractIds?.length) where.id = { in: dto.contractIds };
+    const items = await this.prisma.contractItem.findMany({
+      where: { contract: where, isActive: true },
+      select: { id: true, dailyRate: true, monthlyRate: true },
+    });
+    const factor = 1 + dto.percentual / 100;
+    for (const it of items) {
+      await this.prisma.contractItem.update({
+        where: { id: it.id },
+        data: {
+          dailyRate: Number(it.dailyRate) * factor,
+          monthlyRate: it.monthlyRate ? Number(it.monthlyRate) * factor : undefined,
+        },
+      });
+    }
+    return { updated: items.length, percentual: dto.percentual };
+  }
+
+  // ─── TROCA DE TITULARIDADE ───
+
+  async trocaTitularidade(companyId: string, contractId: string, newCustomerId: string) {
+    const contract = await this.findOne(companyId, contractId);
+    const newCustomer = await this.prisma.customer.findFirst({
+      where: { id: newCustomerId, companyId, isActive: true },
+    });
+    if (!newCustomer) throw new NotFoundException('Novo cliente não encontrado');
+
+    const contractNumber = await this.nextContractNumber(companyId);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.contract.update({
+        where: { id: contractId },
+        data: { status: 'TERMINATED', endDate: new Date() },
+      });
+      const items = await tx.contractItem.findMany({
+        where: { contractId, isActive: true },
+        include: { asset: true },
+      });
+      const novo = await tx.contract.create({
+        data: {
+          companyId,
+          customerId: newCustomerId,
+          contractNumber,
+          type: contract.type,
+          status: 'ACTIVE',
+          startDate: new Date(),
+          paymentTerms: contract.paymentTerms,
+          paymentMethod: contract.paymentMethod,
+          notes: `Troca de titularidade do contrato ${contract.contractNumber}`,
+        },
+      });
+      for (const it of items) {
+        await tx.contractItem.create({
+          data: {
+            contractId: novo.id,
+            assetId: it.assetId,
+            dailyRate: it.dailyRate,
+            monthlyRate: it.monthlyRate,
+            startDate: new Date(),
+            notes: it.notes,
+          },
+        });
+      }
+      return tx.contract.findUnique({
+        where: { id: novo.id },
+        include: { customer: true, items: { include: { asset: true } } },
+      });
+    });
+  }
+
+  // ─── ANÁLISE CRÍTICA ───
+
+  async createAnalysis(companyId: string, contractId: string, dto: any) {
+    await this.findOne(companyId, contractId);
+    return this.prisma.contractAnalysis.create({
+      data: {
+        contractId,
+        proposalNumber: dto.proposalNumber,
+        proposalDate: dto.proposalDate ? new Date(dto.proposalDate) : null,
+        customerName: dto.customerName,
+        cnpj: dto.cnpj,
+        addressCnpj: dto.addressCnpj,
+        addressInstall: dto.addressInstall,
+        contactComercial: dto.contactComercial,
+        contactFinanceiro: dto.contactFinanceiro,
+        contactRecebimento: dto.contactRecebimento,
+        responsible: dto.responsible,
+        witness: dto.witness,
+        equipmentModels: dto.equipmentModels,
+        monthlyValue: dto.monthlyValue,
+        monthsRental: dto.monthsRental,
+        expectedExit: dto.expectedExit ? new Date(dto.expectedExit) : null,
+        extraData: dto.extraData,
+      },
+    });
+  }
+
+  async listAnalyses(contractId: string) {
+    return this.prisma.contractAnalysis.findMany({
+      where: { contractId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateAnalysis(companyId: string, contractId: string, analysisId: string, dto: any) {
+    await this.findOne(companyId, contractId);
+    const a = await this.prisma.contractAnalysis.findFirst({ where: { id: analysisId, contractId } });
+    if (!a) throw new NotFoundException('Análise não encontrada');
+    const data: any = { ...dto };
+    if (dto.proposalDate) data.proposalDate = new Date(dto.proposalDate);
+    if (dto.expectedExit) data.expectedExit = new Date(dto.expectedExit);
+    return this.prisma.contractAnalysis.update({ where: { id: analysisId }, data });
+  }
+
+  // ─── DOCUMENTO AF (SupplyOrder) ───
+
+  async createSupplyOrder(companyId: string, contractId: string, dto: any) {
+    await this.findOne(companyId, contractId);
+    return this.prisma.supplyOrder.create({
+      data: {
+        contractId,
+        supplyNumber: dto.supplyNumber,
+        customerName: dto.customerName,
+        mobilization: dto.mobilization ?? false,
+        equipmentCount: dto.equipmentCount,
+        deliveryDate: dto.deliveryDate ? new Date(dto.deliveryDate) : null,
+        layoutNotes: dto.layoutNotes,
+        technicalNotes: dto.technicalNotes,
+      },
+    });
+  }
+
+  async listSupplyOrders(contractId: string) {
+    return this.prisma.supplyOrder.findMany({
+      where: { contractId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  private async nextContractNumber(companyId: string): Promise<string> {
+    const year = new Date().getFullYear();
+    const last = await this.prisma.contract.findFirst({
+      where: { companyId, contractNumber: { contains: String(year) } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const match = last?.contractNumber?.match(/-(\d+)$/);
+    const seq = match ? parseInt(match[1], 10) + 1 : 1;
+    return `CTR-${year}-${String(seq).padStart(3, '0')}`;
   }
 }

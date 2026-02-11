@@ -86,4 +86,39 @@ export class DashboardService {
       monthlyRevenue,
     };
   }
+
+  async getExpeditionPanel(companyId: string, query: { start?: string; end?: string } = {}) {
+    const start = query.start ? new Date(query.start) : new Date();
+    const end = query.end ? new Date(query.end) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const items = await this.prisma.contractItem.findMany({
+      where: {
+        contract: { companyId, deletedAt: null, status: { in: ['ACTIVE', 'DRAFT'] } },
+        isActive: true,
+        scheduledDeliveryDate: { gte: start, lte: end },
+      },
+      include: {
+        contract: {
+          include: {
+            customer: { select: { id: true, razaoSocial: true, nomeFantasia: true } },
+          },
+        },
+        asset: { include: { assetType: true } },
+      },
+      orderBy: { scheduledDeliveryDate: 'asc' },
+    });
+
+    return items.map((it) => ({
+      id: it.id,
+      contractId: it.contractId,
+      contractNumber: it.contract.contractNumber,
+      customer: it.contract.customer.razaoSocial || it.contract.customer.nomeFantasia,
+      assetCode: it.asset?.code,
+      assetType: it.asset?.assetType?.name,
+      scheduledDeliveryDate: it.scheduledDeliveryDate,
+      deliveryBlockedReason: it.deliveryBlockedReason,
+      isBlocked: !!it.deliveryBlockedReason,
+      contractSignedAt: it.contract.contractSignedAt,
+    }));
+  }
 }
