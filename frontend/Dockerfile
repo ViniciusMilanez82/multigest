@@ -12,7 +12,8 @@ RUN npm ci
 
 COPY . .
 
-ENV NEXT_PUBLIC_API_URL=/api
+ARG NEXT_PUBLIC_API_URL=/api
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
 # Stage 2: Production
